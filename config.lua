@@ -11,7 +11,7 @@ Config.Inventory = {
     ForceAdd = false, --Should the meth alsways be added, including when the player cant carry it?
 
     --Only works with ox_inventory
-    oxSplit = true, -- if true, the player receives the amount of meth he can carry
+    oxSplit = true, -- if true, the player only receives the amount he can carry
 }
 
 Config.Item = {

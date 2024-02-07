@@ -145,6 +145,23 @@ AddEventHandler('esx_methcar:drugged', function()
 	ClearTimecycleModifier()
 end)
 
+ESX.RegisterInput("MethProduction", "Meth Production", "keyboard", Config.StartKey, function()
+	playerPed = playerPedId()
+
+	if IsPedInAnyVehicle(playerPed) then
+		car = GetVehiclePedIsIn(playerPed, false)
+		CurrentVehicle = GetVehiclePedIsUsing(PlayerPedId())
+		local modelName = GetDisplayNameFromVehicleModel(GetEntityModel(CurrentVehicle))
+		if modelName == 'JOURNEY' and car then
+			if GetPedInVehicleSeat(car, -1) == playerPed then
+
+			end
+		end
+
+	end
+end)
+
+
 Citizen.CreateThread(function()
 	while true do
 		Citizen.Wait(10)
