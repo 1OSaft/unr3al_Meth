@@ -2,23 +2,26 @@ fx_version 'cerulean'
 game 'gta5'
 lua54 'yes'
 
-author '1OSaft'
-description 'Reworked Methcar from Kuzkay'
-version '2.0.4'
+description 'Wasabi Backpack for Ox Inventory'
+version '1.1.0'
 
-dependencies {'es_extended', 'ox_lib'}
+client_scripts {
+    'client/**.lua'
+}
+
+server_scripts {
+  'server/**.lua',
+  '@oxmysql/lib/MySQL.lua'
+}
 
 shared_scripts {
-    '@es_extended/imports.lua',
-    '@ox_lib/init.lua',
-    'config.lua',
-    'client_config.lua',
-    'locales/*.lua',
+  '@es_extended/imports.lua',
+  '@ox_lib/init.lua',
+  'config.lua'
 }
-client_scripts {
-    'client/*.lua'
-}
-server_scripts {
-    'server/*.lua',
-    'logs/config.log.lua'
+
+dependencies {
+  'ox_inventory',
+  'ox_lib',
+  'oxmysql'
 }
