@@ -4,7 +4,7 @@ lua54 'yes'
 
 author '1OSaft'
 description 'Reworked Methcar from Kuzkay'
-version '2.0.2'
+version '2.0.3'
 
 dependencies {'es_extended', 'ox_lib'}
 
