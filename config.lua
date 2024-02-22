@@ -14,6 +14,8 @@ Config.Inventory = {
     oxSplit = true, -- if true, the player only receives the amount he can carry
 }
 
+Config.Cam = true --Enable the new camera system
+
 Config.Item = {
     Meth = 'meth',
     Acetone = 'acetone',
