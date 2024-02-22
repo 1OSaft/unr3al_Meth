@@ -182,13 +182,18 @@ AddEventHandler('esx_methcar:drugged', function()
 	ClearTimecycleModifier()
 end)
 
+if (Config.Debug) then
+	RegisterCommand('meth', function()
+		ClearTimecycleModifier()
+	end, false)
+end
 
-
-ESX.RegisterInput("MethProduction", "Meth Production", "keyboard", Config.StartKey, function()
+RegisterNetEvent('esx_methcar:checkstart')
+AddEventHandler('esx_methcar:checkstart', function()
 	print("PlayerState.Cooking: "..tostring(PlayerState.Cooking))
 	if (PlayerState.Cooking == false) then
 		playerPed = PlayerPedId()
-		if IsPedInAnyVehicle(playerPed) then
+		if IsPedInAnyVehicle(playerPed, false) then
 			car = GetVehiclePedIsIn(playerPed, false)
 			CurrentVehicle = GetVehiclePedIsUsing(PlayerPedId())
 			local modelName = GetDisplayNameFromVehicleModel(GetEntityModel(CurrentVehicle))
@@ -200,10 +205,18 @@ ESX.RegisterInput("MethProduction", "Meth Production", "keyboard", Config.StartK
 						if #Cops >= Config.PoliceCount then
 							if Config.Debug then print("Trying to start propduction") end
 							if IsVehicleSeatFree(CurrentVehicle, 3) then
-								TriggerServerEvent('esx_methcar:start')
-								PlayerState:set('Progress', 0)
-								PlayerState:set('Quality', 0)
-								PlayerState:set('Paused', false)
+								--[[
+								local input = lib.inputDialog('Dialog title', {
+									{type = 'select', label = 'Select meth recipe', description = 'Some input description', required = true, options = {{label = 'Easy', value = 'easy'}, {label = 'Medium', value = 'medium'}, {label = 'Hard', value = 'hard'}}},
+								})
+								print(json.encode(input))
+								
+								if (input ~= nil) then--]]
+									TriggerServerEvent('esx_methcar:start')
+									PlayerState:set('Progress', 0)
+									PlayerState:set('Quality', 0)
+									PlayerState:set('Paused', false)
+								--end
 							else
 								notifications(Config.Noti.error, Locales[Config.Locale]['Seat_Occupied'], Config.Noti.time)
 							end
@@ -217,6 +230,11 @@ ESX.RegisterInput("MethProduction", "Meth Production", "keyboard", Config.StartK
 	end
 end)
 
+if (Config.StartProduction.Key.Enabled) then
+	ESX.RegisterInput("MethProduction", "Meth Production", "keyboard", Config.StartProduction.Key.StartKey, function()
+		TriggerEvent('esx_methcar:checkstart')
+	end)
+end
 
 RegisterNetEvent('esx_methcar:production')
 AddEventHandler('esx_methcar:production', function()
@@ -277,6 +295,7 @@ AddEventHandler('esx_methcar:production', function()
 			TriggerEvent('esx_methcar:stop')
 			PlayerState:set('Progress', 100)
 			notifications(Config.Noti.success, Locales[Config.Locale]['Production_Finish'], Config.Noti.time)
+			if Config.Debug then print('Quality: '..PlayerState.Quality) end
 			TriggerServerEvent('esx_methcar:finish', PlayerState.Quality)
 			FreezeEntityPosition(LastCar, false)
 		end

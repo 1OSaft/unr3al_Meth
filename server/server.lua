@@ -1,5 +1,15 @@
 print("Unr3al Meth by 1OSaft")
 
+if (Config.StartProduction.Item.Enabled) then
+	ESX.RegisterUsableItem(Config.StartProduction.Item.ItemName, function(source)
+		local xPlayer = ESX.GetPlayerFromId(source)
+		if (Config.StartProduction.Item.ConsumeOnStart) then
+			xPlayer.removeInventoryItem(Config.StartProduction.Item.ItemName, 1)
+		end
+		TriggerClientEvent('esx_methcar:checkstart', xPlayer.source)
+	end)
+end
+
 RegisterServerEvent('esx_methcar:start')
 AddEventHandler('esx_methcar:start', function()
 	local _source = source
@@ -87,6 +97,7 @@ AddEventHandler('esx_methcar:finish', function(qualtiy)
 	local rnd = math.random(Config.Item.Chance.Min, Config.Item.Chance.Max)
 	local Amount = math.floor(qualtiy / 2) + rnd
 	if Config.Debug then print('Base Amount: '.. Amount) end
+	local MethAmount = Amount
 
 	if Config.Inventory.Type == 'ox_iventory' and not Config.Inventory.ForceAdd then
 
