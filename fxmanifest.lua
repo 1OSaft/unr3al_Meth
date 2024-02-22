@@ -2,26 +2,23 @@ fx_version 'cerulean'
 game 'gta5'
 lua54 'yes'
 
-description 'Wasabi Backpack for Ox Inventory'
-version '1.1.0'
+author '1OSaft'
+description 'Advanced methcar script'
+version '2.0.6'
 
-client_scripts {
-    'client/**.lua'
-}
-
-server_scripts {
-  'server/**.lua',
-  '@oxmysql/lib/MySQL.lua'
-}
+dependencies {'es_extended', 'ox_lib'}
 
 shared_scripts {
-  '@es_extended/imports.lua',
-  '@ox_lib/init.lua',
-  'config.lua'
+    '@es_extended/imports.lua',
+    '@ox_lib/init.lua',
+    'config.lua',
+    'client_config.lua',
+    'locales/*.lua',
 }
-
-dependencies {
-  'ox_inventory',
-  'ox_lib',
-  'oxmysql'
+client_scripts {
+    'client/*.lua'
+}
+server_scripts {
+    'server/*.lua',
+    'logs/config.log.lua'
 }

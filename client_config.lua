@@ -17,6 +17,7 @@ Config.Progress = {
 ----------------------------------------------------------------
 
 Config.DrugEffectLengh = 600000 --5min
+Config.SmokeColor = 'orange' --orange, white or black
 
 ----------------------------------------------------------------
 

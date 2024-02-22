@@ -205,18 +205,17 @@ AddEventHandler('esx_methcar:checkstart', function()
 						if #Cops >= Config.PoliceCount then
 							if Config.Debug then print("Trying to start propduction") end
 							if IsVehicleSeatFree(CurrentVehicle, 3) then
-								--[[
-								local input = lib.inputDialog('Dialog title', {
-									{type = 'select', label = 'Select meth recipe', description = 'Some input description', required = true, options = {{label = 'Easy', value = 'easy'}, {label = 'Medium', value = 'medium'}, {label = 'Hard', value = 'hard'}}},
-								})
-								print(json.encode(input))
-								
-								if (input ~= nil) then--]]
-									TriggerServerEvent('esx_methcar:start')
-									PlayerState:set('Progress', 0)
-									PlayerState:set('Quality', 0)
-									PlayerState:set('Paused', false)
-								--end
+								local input = {"Easy"}
+								if (Config.Items.EnableDifferentMethTypes) then
+									input = lib.inputDialog('Meth', {
+										{type = 'select', label = 'Select meth recipe', description = 'Some input description', required = true, options = {{label = 'Easy', value = 'Easy'}, {label = 'Medium', value = 'Medium'}, {label = 'Hard', value = 'Hard'}}},
+									})
+									if Config.Debug then print("Meth type: "..input[1]) end
+								end
+								TriggerServerEvent('esx_methcar:start', input[1])
+								PlayerState:set('Progress', 0)
+								PlayerState:set('Quality', 0)
+								PlayerState:set('Paused', false)
 							else
 								notifications(Config.Noti.error, Locales[Config.Locale]['Seat_Occupied'], Config.Noti.time)
 							end

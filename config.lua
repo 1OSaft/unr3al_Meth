@@ -17,11 +17,6 @@ Config.StartProduction = {
     }
 }
 
-
-
-
-
-
 Config.Inventory = {
     Type = 'ox_inventory',   --valid options are 'ox_inventory' or 'esx' this used for functions and the way items get added when max weight is reached
 
@@ -31,35 +26,70 @@ Config.Inventory = {
     oxSplit = true, -- if true, the player only receives the amount he can carry
 }
 
-Config.Cam = true --Enable the new camera system
-
-Config.Item = {
-    Meth = 'meth',
-    Acetone = 'acetone',
-    Lithium = 'lithium',
-    Methlab = 'methlab',
-
-    Chance = { -- At the End a random amount of Meth gets added to the quantity received by questions
-        Min = -5,
-        Max = 5
-    }
-}
-
-Config.LogType = 'discord' --Valid options are 'ox_lib', 'discord' or 'disabled'
-
-
-
-
-
-
-
-
 Config.Police                     = 'police'            -- Your Police society name
 Config.PoliceCount                = 0
 
+Config.Cam = true --Enable the new camera system
 
-Config.SmokeColor = 'orange' --orange, white or black
+Config.LogType = 'disabled' --Valid options are 'ox_lib', 'discord' or 'disabled'
 
+Config.Items = {
+    Methlab = 'methlab',
+
+    EnableDifferentMethTypes = true, -- If you disabble the different meth types the input dialog disappeares and it takes the values out of the Easy type
+
+    Easy = {
+        Item1 = {
+            ItemName = 'acetone',
+            Count = 5
+        },
+        Item2 = {
+            ItemName = 'lithium',
+            Count = 2
+        },
+        Meth = {
+            ItemName = 'meth',
+            Chance = { -- At the End a random amount of Meth gets added to the quantity received by questions
+                Min = -5,
+                Max = 5
+            },
+        }
+    },
+    Medium = {
+        Item1 = {
+            ItemName = 'acetone',
+            Count = 8
+        },
+        Item2 = {
+            ItemName = 'lithium',
+            Count = 4
+        },
+        Meth = {
+            ItemName = 'meth',
+            Chance = { -- At the End a random amount of Meth gets added to the quantity received by questions
+                Min = 0,
+                Max = 12
+            },
+        }
+    },
+    Hard = {
+        Item1 = {
+            ItemName = 'acetone',
+            Count = 12
+        },
+        Item2 = {
+            ItemName = 'lithium',
+            Count = 8
+        },
+        Meth = {
+            ItemName = 'meth',
+            Chance = { -- At the End a random amount of Meth gets added to the quantity received by questions
+                Min = 7,
+                Max = 20
+            },
+        }
+    }
+}
 
 
 Config.Noti = {

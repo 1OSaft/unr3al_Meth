@@ -1,16 +1,16 @@
 if Config.checkForUpdates then
     local curVersion = GetResourceMetadata(GetCurrentResourceName(), "version")
-    local resourceName = "unr3al_backpack"
+    local resourceName = "unr3al_meth"
 
     CreateThread(function()
-        if GetCurrentResourceName() ~= "unr3al_backpack" then
-            resourceName = "unr3al_backpack (" .. GetCurrentResourceName() .. ")"
+        if GetCurrentResourceName() ~= "unr3al_meth" then
+            resourceName = "unr3al_meth (" .. GetCurrentResourceName() .. ")"
         end
     end)
 
     CreateThread(function()
         while true do
-            PerformHttpRequest("https://api.github.com/repos/1OSaft/unr3al_backpack/releases/latest", CheckVersion, "GET")
+            PerformHttpRequest("https://api.github.com/repos/1OSaft/unr3al_meth/releases/latest", CheckVersion, "GET")
             Wait(3600000)
         end
     end)
@@ -35,7 +35,7 @@ if Config.checkForUpdates then
     GetRepoInformations = function()
         local repoVersion, repoURL, repoBody = nil, nil, nil
 
-        PerformHttpRequest("https://api.github.com/repos/1OSaft/unr3al_backpack/releases/latest", function(err, response, headers)
+        PerformHttpRequest("https://api.github.com/repos/1OSaft/unr3al_meth/releases/latest", function(err, response, headers)
             if err == 200 then
                 local data = json.decode(response)
 
@@ -44,7 +44,7 @@ if Config.checkForUpdates then
                 repoBody = data.body
             else
                 repoVersion = curVersion
-                repoURL = "https://github.com/1OSaft/unr3al_backpack"
+                repoURL = "https://github.com/1OSaft/unr3al_meth"
             end
         end, "GET")
 
