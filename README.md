@@ -21,6 +21,8 @@ This resource was created as a free meth script
 For support and previews join my discord
 https://discord.gg/euewAxCAUN
 
+# To-do
+- Add hardcore mode, where you need items you selected in the questions
 
 # Credits
 Thanks to Tizas for helping me and giving me advice
