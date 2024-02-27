@@ -23,5 +23,5 @@ https://discord.gg/euewAxCAUN
 
 
 # Credits
-Thanks to Tizas for helping me with a stupid error
+Thanks to Tizas for helping me and giving me advice
 https://github.com/Tiziukas
