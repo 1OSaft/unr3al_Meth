@@ -10,8 +10,8 @@ Config.PauseTime = 4000
 
 -- % every update gets added
 Config.Progress = {
-    Min = 1,
-    Max = 5
+    Min = 5,
+    Max = 10
 }
 
 ----------------------------------------------------------------

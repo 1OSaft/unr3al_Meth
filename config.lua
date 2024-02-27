@@ -18,8 +18,6 @@ Config.StartProduction = {
 }
 
 Config.Inventory = {
-    Type = 'ox_inventory',   --valid options are 'ox_inventory' or 'esx' this used for functions and the way items get added when max weight is reached
-
     ForceAdd = false, --Should the meth alsways be added, including when the player cant carry it?
 
     --Only works with ox_inventory

@@ -11,17 +11,17 @@ if (Config.StartProduction.Item.Enabled) then
 end
 
 RegisterServerEvent('esx_methcar:start')
-AddEventHandler('esx_methcar:start', function(methType)
-	local _source = source
-	local methType = methType
-	local xPlayer = ESX.GetPlayerFromId(_source)
-	local pos = GetEntityCoords(GetPlayerPed(_source))
-	Player(source).state:set('methType', methType)
+AddEventHandler('esx_methcar:start', function(type)
+	local methType = type
+	local src = source
+	local xPlayer = ESX.GetPlayerFromId(src)
+	local pos = GetEntityCoords(GetPlayerPed(src))
+	Player(src).state:set('methType', type)
 
 	if Config.LogType == 'discord' then
 		DiscordLogs("start", "Started Cooking", "green", {
 			{name = "Player Informations", value = " ", inline = false},
-			{name = "ID", value = tostring(_source), inline = true},
+			{name = "ID", value = tostring(src), inline = true},
 			{name = "Name", value = tostring(xPlayer.name), inline = true},
 			{name = "Identifier", value = tostring(xPlayer.identifier), inline = true},
 			{name = "Cords", value = " ", inline = false},
@@ -47,26 +47,26 @@ AddEventHandler('esx_methcar:start', function(methType)
 		if Acetone >= Config.Items[methType].Item1.Count and Lithium >= Config.Items[methType].Item2.Count and Methlab >= 1 then
 			exports.ox_inventory:RemoveItem(xPlayer.source, Config.Items[methType].Item1.ItemName, Config.Items[methType].Item1.Count)
 			exports.ox_inventory:RemoveItem(xPlayer.source, Config.Items[methType].Item2.ItemName, Config.Items[methType].Item2.Count)
-			TriggerClientEvent('esx_methcar:startprod', _source)
+			TriggerClientEvent('esx_methcar:startprod', src)
 			if Config.Debug then print("Removed Starting Items") end
 		else
-			TriggerClientEvent('esx_methcar:notify', _source, Config.Noti.error, Locales[Config.Locale]['Not_Supplies'])
+			TriggerClientEvent('esx_methcar:notify', src, Config.Noti.error, Locales[Config.Locale]['Not_Supplies'])
 		end
 	else
 		if xPlayer.getInventoryItem(Config.Items[methType].Item1.ItemName).count >= Config.Items[methType].Item1.Count and xPlayer.getInventoryItem(Config.Items[methType].Item2.ItemName).count >= Config.Items[methType].Item2.Count and xPlayer.getInventoryItem(Config.Items.Methlab).count >= 1 then
-				TriggerClientEvent('esx_methcar:startprod', _source)
+				TriggerClientEvent('esx_methcar:startprod', src)
 				xPlayer.removeInventoryItem(Config.Items[methType].Item1.ItemName, Config.Items[methType].Item1.Count)
 				xPlayer.removeInventoryItem(Config.Items[methType].Item2.ItemName, Config.Items[methType].Item2.Count)
 				if Config.Debug then print("Removed Starting Items") end
 		else
-			TriggerClientEvent('esx_methcar:notify', _source, Config.Noti.error, Locales[Config.Locale]['Not_Supplies'])
+			TriggerClientEvent('esx_methcar:notify', src, Config.Noti.error, Locales[Config.Locale]['Not_Supplies'])
 		end
 	end
 end)
 
 RegisterServerEvent('esx_methcar:stopf')
 AddEventHandler('esx_methcar:stopf', function(id)
-	local _source = source
+	local src = source
 	local xPlayers = ESX.GetExtendedPlayers()
 
 	for k, xPlayer in pairs(xPlayers) do
@@ -76,8 +76,8 @@ end)
 
 RegisterServerEvent('esx_methcar:make')
 AddEventHandler('esx_methcar:make', function(posx,posy,posz)
-	local _source = source
-	local xPlayer = ESX.GetPlayerFromId(_source)
+	local src = source
+	local xPlayer = ESX.GetPlayerFromId(src)
 	
 	if xPlayer.getInventoryItem('methlab').count >= 1 then
 		local xPlayers = ESX.GetExtendedPlayers()
@@ -86,23 +86,28 @@ AddEventHandler('esx_methcar:make', function(posx,posy,posz)
 			TriggerClientEvent('esx_methcar:smoke', xPlayer.source, posx, posy, posz, 'a')
 		end
 	else
-		TriggerClientEvent('esx_methcar:stop', _source)
+		TriggerClientEvent('esx_methcar:stop', src)
 	end
 end)
 
 RegisterServerEvent('esx_methcar:finish')
 AddEventHandler('esx_methcar:finish', function(qualtiy)
-	local _source = source
-	local xPlayer = ESX.GetPlayerFromId(_source)
+	local src = source
+	local xPlayer = ESX.GetPlayerFromId(src)
 	if Config.Debug then print('Base Quality: '.. qualtiy) end
-	local rnd = math.random(Config.Items[Player(source).state.methType].Meth.Chance.Min, Config.Items[Player(source).state.methType].Chance.Max)
+	print(Player(src).state.methType)
+	local rnd = math.random(Config.Items[Player(src).state.methType].Meth.Chance.Min, Config.Items[Player(src).state.methType].Meth.Chance.Max)
 	local Amount = math.floor(qualtiy / 2) + rnd
 	if Config.Debug then print('Base Amount: '.. Amount) end
 	local MethAmount = Amount
+	local invstate = GetResourceState('ox_inventory')
 
-	if Config.Inventory.Type == 'ox_inventory' and not Config.Inventory.ForceAdd then
+	if invstate == 'started' and not Config.Inventory.ForceAdd then
 		
 		AmountPlayerCanCarry = exports.ox_inventory:CanCarryAmount(xPlayer.source, Config.Items[Player(source).state.methType].Meth.ItemName)
+		if (AmountPlayerCanCarry <= 0) then
+			AmountPlayerCanCarry = 0
+		end
 		if Config.Debug then print('Space for Meth: '.. AmountPlayerCanCarry) end
 
 		if Config.Inventory.oxSplit then
@@ -110,19 +115,11 @@ AddEventHandler('esx_methcar:finish', function(qualtiy)
 				MethAmount = Amount
 				exports.ox_inventory:AddItem(xPlayer.source, Config.Items[Player(source).state.methType].Meth.ItemName, Amount)
 			else
-				MethAmount = AmountPlayerCanCarry - Amount
-				exports.ox_inventory:AddItem(xPlayer.source, Config.Items[Player(source).state.methType].Meth.ItemName, MethAmount)
-			end
-		elseif Config.Inventory == 'glovebox' then
-			if Amount <= AmountPlayerCanCarry then
-				MethAmount = Amount
-				exports.ox_inventory:AddItem(xPlayer.source, Config.Items[Player(source).state.methType].Meth.ItemName, Amount)
-			else
-				MethAmount = AmountPlayerCanCarry - Amount
+				MethAmount = AmountPlayerCanCarry
 				exports.ox_inventory:AddItem(xPlayer.source, Config.Items[Player(source).state.methType].Meth.ItemName, MethAmount)
 			end
 		end
-	elseif Config.Inventory.Type == 'ox_iventory' and Config.Inventory.ForceAdd then
+	elseif invstate == 'started' and Config.Inventory.ForceAdd then
 		MethAmount = Amount
 		exports.ox_inventory:AddItem(xPlayer.source, Config.Items[Player(source).state.methType].Meth.ItemName, MethAmount)
 	else
@@ -135,13 +132,13 @@ AddEventHandler('esx_methcar:finish', function(qualtiy)
 	end
 
 	if Config.Debug then print('Amount added: '.. MethAmount) end
-	local pos = GetEntityCoords(GetPlayerPed(_source))
+	local pos = GetEntityCoords(GetPlayerPed(src))
 
 	if Config.LogType == 'discord' then
 		DiscordLogs("finish", "Finished Cooking", "green", {
 
 			{name = "Player Informations", value = " ", inline = false},
-			{name = "ID", value = tostring(_source), inline = true},
+			{name = "ID", value = tostring(src), inline = true},
 			{name = "Name", value = tostring(xPlayer.name), inline = true},
 			{name = "Identifier", value = tostring(xPlayer.identifier), inline = true},
 			{name = " ", value = " ", inline = false},
@@ -163,9 +160,9 @@ end)
 
 RegisterServerEvent('esx_methcar:blow')
 AddEventHandler('esx_methcar:blow', function(posx, posy, posz)
-	local _source = source
+	local src = source
 	local xPlayers = ESX.GetExtendedPlayers()
-	local xPlayer = ESX.GetPlayerFromId(_source)
+	local xPlayer = ESX.GetPlayerFromId(src)
 
 	for k, xPlayer in pairs(xPlayers) do
 		TriggerClientEvent('esx_methcar:blowup', xPlayer.source,posx, posy, posz)
@@ -180,7 +177,7 @@ AddEventHandler('esx_methcar:blow', function(posx, posy, posz)
 	if Config.LogType == 'discord' then
 		DiscordLogs("explosion", "Explosion", "red", {
 			{name = "Player Informations", value = " ", inline = false},
-			{name = "ID", value = _source, inline = true},
+			{name = "ID", value = src, inline = true},
 			{name = "Name", value = xPlayer.name, inline = true},
 			{name = "Identifier", value = xPlayer.identifier, inline = true},
 			{name = " ", value = " ", inline = false},
