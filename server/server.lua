@@ -95,7 +95,7 @@ AddEventHandler('esx_methcar:finish', function(qualtiy)
 	local _source = source
 	local xPlayer = ESX.GetPlayerFromId(_source)
 	if Config.Debug then print('Base Quality: '.. qualtiy) end
-	local rnd = math.random(Config.Items[Player(source).state.methType].Meth.Chance.Min, Config.Items[Player(source).state.Meth.methType].Max)
+	local rnd = math.random(Config.Items[Player(source).state.methType].Meth.Chance.Min, Config.Items[Player(source).state.methType].Chance.Max)
 	local Amount = math.floor(qualtiy / 2) + rnd
 	if Config.Debug then print('Base Amount: '.. Amount) end
 	local MethAmount = Amount
