@@ -1,4 +1,8 @@
 print("Unr3al Meth by 1OSaft")
+local invstate = GetResourceState('ox_inventory')
+if (invstate == 'started' and Config.Debug) then
+	print("ox_inventory detected")
+end
 
 if (Config.StartProduction.Item.Enabled) then
 	ESX.RegisterUsableItem(Config.StartProduction.Item.ItemName, function(source)
@@ -17,6 +21,7 @@ AddEventHandler('esx_methcar:start', function(type)
 	local xPlayer = ESX.GetPlayerFromId(src)
 	local pos = GetEntityCoords(GetPlayerPed(src))
 	Player(src).state:set('methType', type)
+	if Config.Debug then print("Methtype: "..type) end
 
 	if Config.LogType == 'discord' then
 		DiscordLogs("start", "Started Cooking", "green", {
@@ -38,8 +43,8 @@ AddEventHandler('esx_methcar:start', function(type)
 
 	if Config.Debug then print("Trying to remove Players Items") end
 
-	if Config.Inventory.Type == 'ox_inventory' then
-		
+	if invstate == 'started' then
+
 		local Acetone = exports.ox_inventory:GetItemCount(xPlayer.source, Config.Items[methType].Item1.ItemName)
 		local Lithium = exports.ox_inventory:GetItemCount(xPlayer.source, Config.Items[methType].Item2.ItemName)
 		local Methlab = exports.ox_inventory:GetItemCount(xPlayer.source, Config.Items.Methlab)
@@ -53,7 +58,11 @@ AddEventHandler('esx_methcar:start', function(type)
 			TriggerClientEvent('esx_methcar:notify', src, Config.Noti.error, Locales[Config.Locale]['Not_Supplies'])
 		end
 	else
-		if xPlayer.getInventoryItem(Config.Items[methType].Item1.ItemName).count >= Config.Items[methType].Item1.Count and xPlayer.getInventoryItem(Config.Items[methType].Item2.ItemName).count >= Config.Items[methType].Item2.Count and xPlayer.getInventoryItem(Config.Items.Methlab).count >= 1 then
+		local Acetone = xPlayer.getInventoryItem(Config.Items[methType].Item1.ItemName).count
+		local Lithium = xPlayer.getInventoryItem(Config.Items[methType].Item2.ItemName).count
+		local Methlab = xPlayer.getInventoryItem(Config.Items.Methlab).count
+
+		if Acetone >= Config.Items[methType].Item1.Count and Lithium >= Config.Items[methType].Item2.Count and Methlab >= 1 then
 				TriggerClientEvent('esx_methcar:startprod', src)
 				xPlayer.removeInventoryItem(Config.Items[methType].Item1.ItemName, Config.Items[methType].Item1.Count)
 				xPlayer.removeInventoryItem(Config.Items[methType].Item2.ItemName, Config.Items[methType].Item2.Count)
@@ -100,7 +109,6 @@ AddEventHandler('esx_methcar:finish', function(qualtiy)
 	local Amount = math.floor(qualtiy / 2) + rnd
 	if Config.Debug then print('Base Amount: '.. Amount) end
 	local MethAmount = Amount
-	local invstate = GetResourceState('ox_inventory')
 
 	if invstate == 'started' and not Config.Inventory.ForceAdd then
 		
