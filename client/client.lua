@@ -11,8 +11,7 @@ local Keys = {
 }
 
 local CurrentVehicle, LastCar
-local progress, quality = 0, 0
-local started, displayed, pause, posLog, CurrentVehicleLog, carLog, LastCarLog, modelLog, modelNameLog, LastVehicleLog, smokeC, smoke = false, false, false, false, false, false, false, false, false, false, nil, nil
+local smokeC, smoke = nil, nil
 local smokecolour = ""
 
 local PlayerState = LocalPlayer.state
