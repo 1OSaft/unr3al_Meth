@@ -190,7 +190,7 @@ end
 
 RegisterNetEvent('esx_methcar:checkstart')
 AddEventHandler('esx_methcar:checkstart', function()
-	print("PlayerState.Cooking: "..tostring(PlayerState.Cooking))
+	if (Config.Debug) then 	print("PlayerState.Cooking: "..tostring(PlayerState.Cooking)) end
 	if (PlayerState.Cooking == false) then
 		playerPed = PlayerPedId()
 		if IsPedInAnyVehicle(playerPed, false) then
