@@ -57,6 +57,7 @@ AddEventHandler('esx_methcar:stop', function()
 	end
 	DisplayHelpText(Locales[Config.Locale]['Production_Stoped'])
 	FreezeEntityPosition(LastCar, false)
+	FreezeEntityPosition(CurrentVehicle, false)
 	StopParticleFxLooped(smokeC, 0)
 end)
 
