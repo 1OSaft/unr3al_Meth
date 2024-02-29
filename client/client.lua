@@ -10,12 +10,22 @@ local Keys = {
 	["NENTER"] = 201, ["N4"] = 108, ["N5"] = 60, ["N6"] = 107, ["N+"] = 96, ["N-"] = 97, ["N7"] = 117, ["N8"] = 61, ["N9"] = 118
 }
 
+local Core = {}
+Core.Input = {}
+
 local CurrentVehicle, LastCar
 local smokeC, smoke = nil, nil
 local smokecolour = ""
-
+local registeredContext = false
 local PlayerState = LocalPlayer.state
 PlayerState:set('Cooking', false)
+
+Citizen.CreateThread(function()
+	if (not registeredContext) then
+		registeredContext = true
+		TriggerEvent('esx_methcar:registerContext')
+	end
+end)
 
 function toggleCam(bool)
     if bool then
@@ -230,11 +240,6 @@ AddEventHandler('esx_methcar:checkstart', function()
 	end
 end)
 
-if (Config.StartProduction.Key.Enabled) then
-	ESX.RegisterInput("MethProduction", "Meth Production", "keyboard", Config.StartProduction.Key.StartKey, function()
-		TriggerEvent('esx_methcar:checkstart')
-	end)
-end
 
 RegisterNetEvent('esx_methcar:production')
 AddEventHandler('esx_methcar:production', function()
@@ -268,28 +273,12 @@ AddEventHandler('esx_methcar:production', function()
 				PlayerState:set('MenuOpen', false)
 				--Wait(Config.PauseTime)
 			end
-			if (not PlayerState.Paused and PlayerState.Progress > 10 and MiniGamePercentage == 1) then
+			if (not PlayerState.Paused and PlayerState.Progress > 10 and PlayerState.Progress < 95 and MiniGamePercentage == 1 and PlayerState.Cooking) then
 				PlayerState:set('Paused', true)
 
 				local MiniGame = math.random(1,8)
 				--TriggerEvent('esx_methcar:Context'..MiniGame)
-				if (MiniGame == 1) then
-					TriggerEvent('esx_methcar:Context1')
-				elseif (MiniGame == 2) then
-					TriggerEvent('esx_methcar:Context2')
-				elseif (MiniGame == 3) then
-					TriggerEvent('esx_methcar:Context3')
-				elseif (MiniGame == 4) then
-					TriggerEvent('esx_methcar:Context4')
-				elseif (MiniGame == 5) then
-					TriggerEvent('esx_methcar:Context5')
-				elseif (MiniGame == 6) then
-					TriggerEvent('esx_methcar:Context6')
-				elseif (MiniGame == 7) then
-					TriggerEvent('esx_methcar:Context7')
-				elseif (MiniGame == 8) then
-					TriggerEvent('esx_methcar:Context8')
-				end
+				lib.showContext('Event_0'..MiniGame)
 			end
 		else
 			TriggerEvent('esx_methcar:stop')
@@ -302,11 +291,11 @@ AddEventHandler('esx_methcar:production', function()
 	end
 end)
 
-RegisterNetEvent('esx_methcar:Context1')
-AddEventHandler('esx_methcar:Context1', function()
+RegisterNetEvent('esx_methcar:registerContext')
+AddEventHandler('esx_methcar:registerContext', function()
 	lib.registerContext({
-		id = 'Event_01',
-		title = Locales[Config.Locale]['Question_01'],
+		id = 'Event_08',
+		title = Locales[Config.Locale]['Question_08'],
 		onExit = function()
 			Wait(20)
 			TriggerEvent('esx_methcar:stop')
@@ -314,7 +303,7 @@ AddEventHandler('esx_methcar:Context1', function()
 		options = {
 			{title = Locales[Config.Locale]['Choose_Option'], icon = 'question', description = Locales[Config.Locale]['Update1'] .. PlayerState.Progress .. Locales[Config.Locale]['Update2']},
 			{
-				title =  Locales[Config.Locale]['Question_01_Answer_1'],
+				title = Locales[Config.Locale]['Question_08_Answer_1'],
 				onSelect = function(args)
 					if Config.Debug then print('Pressed 1') end
 
@@ -323,104 +312,76 @@ AddEventHandler('esx_methcar:Context1', function()
 
 					local Questions = Config.SkillCheck.Questions
 
-					local pos = GetEntityCoords(PlayerPedId())
-					if not Questions.DisableAll and Questions.Question_01.Enabled then
-						if Questions.Question_01.DifficultyAnswer_1 == 0 then
+					if not Questions.DisableAll and Questions.Question_08.Enabled then
+						if Questions.Question_08.DifficultyAnswer_1 == 0 then
+							notifications(Config.Noti.success, Locales[Config.Locale]['Question_08_Answer_1_1'], Config.Noti.time)
+							PlayerState:set('Quality', PlayerState.Quality + 1)
 							PlayerState:set('Paused', false)
-						elseif Questions.Question_01.DifficultyAnswer_1 == 1 then
+						elseif Questions.Question_08.DifficultyAnswer_1 == 1 then
 							local success = lib.skillCheck(Questions.Difficulty_1.Difficulty, Questions.Difficulty_1.Key)
 							if success then
+								notifications(Config.Noti.success, Locales[Config.Locale]['Question_08_Answer_1_1'], Config.Noti.time)
+								PlayerState:set('Quality', PlayerState.Quality + 1)
 								PlayerState:set('Paused', false)
 							else
-								TriggerServerEvent('esx_methcar:blow', pos.x, pos.y, pos.z)
+								notifications(Config.Noti.sucess, Locales[Config.Locale]['Question_08_Answer_2_1'], Config.Noti.time)
+								PlayerState:set('Paused', false)
+								PlayerState:set('Quality', PlayerState.Quality + 1)
 							end
-						elseif Questions.Question_01.DifficultyAnswer_1 == 2 then
+						elseif Questions.Question_08.DifficultyAnswer_1 == 2 then
 							local success = lib.skillCheck(Questions.Difficulty_2.Difficulty, Questions.Difficulty_2.Key)
 							if success then
+								notifications(Config.Noti.success, Locales[Config.Locale]['Question_08_Answer_1_1'], Config.Noti.time)
+								PlayerState:set('Quality', PlayerState.Quality + 1)
 								PlayerState:set('Paused', false)
 							else
-								TriggerServerEvent('esx_methcar:blow', pos.x, pos.y, pos.z)
+								notifications(Config.Noti.sucess, Locales[Config.Locale]['Question_08_Answer_2_1'], Config.Noti.time)
+								PlayerState:set('Paused', false)
+								PlayerState:set('Quality', PlayerState.Quality + 1)
 							end
 						end
 					else
+						notifications(Config.Noti.success, Locales[Config.Locale]['Question_08_Answer_1_1'], Config.Noti.time)
+						PlayerState:set('Quality', PlayerState.Quality + 1)
 						PlayerState:set('Paused', false)
 					end
-					PlayerState:set('Quality', PlayerState.Quality - 3)
 				end,
-				icon = 'tape'
+				icon = 'wine-glass-empty'
 			},
 			{
-				title = Locales[Config.Locale]['Question_01_Answer_2'],
+				title = Locales[Config.Locale]['Question_08_Answer_2'],
 				onSelect = function(args)
 					if Config.Debug then print('Pressed 2') end
+
+					lib.hideContext(true)
+					Wait(20)
+
+					notifications(Config.Noti.sucess, Locales[Config.Locale]['Question_08_Answer_2_1'], Config.Noti.time)
+					PlayerState:set('Paused', false)
+					PlayerState:set('Quality', PlayerState.Quality + 1)
+					
+				end,
+				icon = 'flask'
+			},
+			{
+				title = Locales[Config.Locale]['Question_08_Answer_3'],
+				onSelect = function(args)
+					if Config.Debug then print('Pressed 3') end
 					
 					lib.hideContext(true)
 					Wait(20)
 
-					local pos = GetEntityCoords(PlayerPedId())
-					notifications(Config.Noti.error, Locales[Config.Locale]['Question_01_Fail'], Config.Noti.time)
-					TriggerServerEvent('esx_methcar:blow', pos.x, pos.y, pos.z)
-					SetVehicleEngineHealth(CurrentVehicle, 0.0)
-
-					PlayerState:set('Quality', 0)
-					PlayerState:set('Cooking', false)
-					displayed = false
-					ApplyDamageToPed(PlayerPedId(), 90, false)
-					if Config.Debug then print('Stopped making Drugs') end
+					notifications(Config.Noti.error, Locales[Config.Locale]['Question_08_Answer_3_1'], Config.Noti.time)
+					PlayerState:set('Paused', false)
+					PlayerState:set('Quality', PlayerState.Quality - 1)
 				end,
-				icon = 'circle-pause'
-			},
-			{
-				title = Locales[Config.Locale]['Question_01_Answer_3'],
-				onSelect = function(args)
-					if Config.Debug then print('Pressed 3') end
-
-					lib.hideContext(true)
-					Wait(20)
-
-					local Questions = Config.SkillCheck.Questions
-
-					local pos = GetEntityCoords(PlayerPedId())
-					if not Questions.DisableAll and Questions.Question_01.Enabled then
-						if Questions.Question_01.DifficultyAnswer_3 == 0 then
-							PlayerState:set('Paused', false)
-							PlayerState:set('Quality', PlayerState.Quality + 5)
-						elseif Questions.Question_01.DifficultyAnswer_3 == 1 then
-							local success = lib.skillCheck(Questions.Difficulty_1.Difficulty, Questions.Difficulty_1.Key)
-							if success then
-								notifications(Config.Noti.success, Locales[Config.Locale]['Question_01_Answer_3_1'], Config.Noti.time)
-								PlayerState:set('Quality', PlayerState.Quality + 5)
-								PlayerState:set('Paused', false)
-							else
-								TriggerServerEvent('esx_methcar:blow', pos.x, pos.y, pos.z)
-							end
-						elseif Questions.Question_01.DifficultyAnswer_3 == 2 then
-							local success = lib.skillCheck(Questions.Difficulty_2.Difficulty, Questions.Difficulty_2.Key)
-							if success then
-								notifications(Config.Noti.success, Locales[Config.Locale]['Question_01_Answer_3_1'], Config.Noti.time)
-								PlayerState:set('Quality', PlayerState.Quality + 5)
-								PlayerState:set('Paused', false)
-							else
-								TriggerServerEvent('esx_methcar:blow', pos.x, pos.y, pos.z)
-							end
-						end
-					else
-						PlayerState:set('Quality', PlayerState.Quality + 5)
-						PlayerState:set('Paused', false)
-					end
-				end,
-				icon = 'wrench'
+				icon = 'wine-glass-empty'
 			},
 		},
 	})
-	lib.showContext('Event_01')
-end)
-
-RegisterNetEvent('esx_methcar:Context2')
-AddEventHandler('esx_methcar:Context2', function()
 	lib.registerContext({
-		id = 'Event_02',
-		title = Locales[Config.Locale]['Question_02'],
+		id = 'Event_07',
+		title = Locales[Config.Locale]['Question_07'],
 		onExit = function()
 			Wait(20)
 			TriggerEvent('esx_methcar:stop')
@@ -428,437 +389,49 @@ AddEventHandler('esx_methcar:Context2', function()
 		options = {
 			{title = Locales[Config.Locale]['Choose_Option'], icon = 'question', description = Locales[Config.Locale]['Update1'] .. PlayerState.Progress .. Locales[Config.Locale]['Update2']},
 			{
-				title = Locales[Config.Locale]['Question_02_Answer_1'],
+				title = Locales[Config.Locale]['Question_07_Answer_1'],
 				onSelect = function(args)
 					if Config.Debug then print('Pressed 1') end
-
-					lib.hideContext(true)
-					Wait(20)
-
-					local Questions = Config.SkillCheck.Questions
-
-					if not Questions.DisableAll and Questions.Question_02.Enabled then
-						if Questions.Question_02.DifficultyAnswer_1 == 0 then
-							PlayerState:set('Paused', false)
-							PlayerState:set('Quality', PlayerState.Quality - 1)
-						elseif Questions.Question_02.DifficultyAnswer_1 == 1 then
-							local success = lib.skillCheck(Questions.Difficulty_1.Difficulty, Questions.Difficulty_1.Key)
-							if success then
-								notifications(Config.Noti.info, Locales[Config.Locale]['Question_02_Answer_1_1'], Config.Noti.time)
-								PlayerState:set('Quality', PlayerState.Quality - 1)
-								PlayerState:set('Paused', false)
-							else
-								TriggerEvent('esx_methcar:drugged')
-								PlayerState:set('Paused', false)
-							end
-						elseif Questions.Question_02.DifficultyAnswer_1 == 2 then
-							local success = lib.skillCheck(Questions.Difficulty_2.Difficulty, Questions.Difficulty_2.Key)
-							if success then
-								notifications(Config.Noti.info, Locales[Config.Locale]['Question_02_Answer_1_1'], Config.Noti.time)
-								PlayerState:set('Quality', PlayerState.Quality - 1)
-								PlayerState:set('Paused', false)
-							else
-								TriggerEvent('esx_methcar:drugged')
-								PlayerState:set('Paused', false)
-							end
-						end
-					else
-						TriggerEvent('esx_methcar:drugged')
-						PlayerState:set('Paused', false)
-					end
-				end,
-				icon = 'window-maximize'
-			},
-			{
-				title = Locales[Config.Locale]['Question_02_Answer_2'],
-				onSelect = function(args)
-					if Config.Debug then print('Pressed 2') end
 					
 					lib.hideContext(true)
 					Wait(20)
-
-					notifications(Config.Noti.error, Locales[Config.Locale]['Question_02_Answer_2_1'], Config.Noti.time)
-					PlayerState:set('Paused', false)
-					TriggerEvent('esx_methcar:drugged')
-				end,
-				icon = 'circle-pause'
-			},
-			{
-				title = Locales[Config.Locale]['Question_02_Answer_3'],
-				onSelect = function(args)
-					if Config.Debug then print('Pressed 3') end
-
-					lib.hideContext(true)
-					Wait(20)
-
-					local Questions = Config.SkillCheck.Questions
-
-					if not Questions.DisableAll and Questions.Question_02.Enabled then
-						if Questions.Question_02.DifficultyAnswer_3 == 0 then
-							notifications(Config.Noti.succes, Locales[Config.Locale]['Question_02_Answer_3_1'], Config.Noti.time)
-							SetPedPropIndex(playerPed, 1, 26, 7, true)
-							PlayerState:set('Paused', false)
-						elseif Questions.Question_02.DifficultyAnswer_3 == 1 then
-							local success = lib.skillCheck(Questions.Difficulty_1.Difficulty, Questions.Difficulty_1.Key)
-							if success then
-								notifications(Config.Noti.succes, Locales[Config.Locale]['Question_02_Answer_3_1'], Config.Noti.time)
-								SetPedPropIndex(playerPed, 1, 26, 7, true)
-								PlayerState:set('Paused', false)
-							else
-								TriggerEvent('esx_methcar:drugged')
-								PlayerState:set('Paused', false)
-							end
-						elseif Questions.Question_02.DifficultyAnswer_3 == 2 then
-							local success = lib.skillCheck(Questions.Difficulty_2.Difficulty, Questions.Difficulty_2.Key)
-							if success then
-								notifications(Config.Noti.succes, Locales[Config.Locale]['Question_02_Answer_3_1'], Config.Noti.time)
-								SetPedPropIndex(playerPed, 1, 26, 7, true)
-								PlayerState:set('Paused', false)
-							else
-								TriggerEvent('esx_methcar:drugged')
-								PlayerState:set('Paused', false)
-							end
-						end
-					else
-						notifications(Config.Noti.succes, Locales[Config.Locale]['Question_02_Answer_3_1'], Config.Noti.time)
-						SetPedPropIndex(playerPed, 1, 26, 7, true)
-						PlayerState:set('Paused', false)
-					end
-				end,
-				icon = 'mask-ventilator'
-			},
-		},
-	})
-	lib.showContext('Event_02')
-end)
-
-RegisterNetEvent('esx_methcar:Context3')
-AddEventHandler('esx_methcar:Context3', function()
-	lib.registerContext({
-		id = 'Event_03',
-		title = Locales[Config.Locale]['Question_03'],
-		onExit = function()
-			Wait(20)
-			TriggerEvent('esx_methcar:stop')
-		end,
-		options = {
-			{title = Locales[Config.Locale]['Choose_Option'], icon = 'question', description = Locales[Config.Locale]['Update1'] .. PlayerState.Progress .. Locales[Config.Locale]['Update2']},
-			{
-				title = Locales[Config.Locale]['Question_03_Answer_1'],
-				onSelect = function(args)
-					if Config.Debug then print('Pressed 1') end
-
-					lib.hideMenu(true)
-					Wait(20)
-
-					notifications(Config.Noti.error, Locales[Config.Locale]['Question_03_Answer_1_1'], Config.Noti.time)
-					PlayerState:set('Paused', false)
-				end,
-				icon = 'burn'
-			},
-			{
-				title = Locales[Config.Locale]['Question_03_Answer_2'],
-				onSelect = function(args)
-					if Config.Debug then print('Pressed 2') end
-
-					lib.hideMenu(true)
-					Wait(20)
-
-					local Questions = Config.SkillCheck.Questions
-
-					if not Questions.DisableAll and Questions.Question_03.Enabled then
-						if Questions.Question_03.DifficultyAnswer_2 == 0 then
-							notifications(Config.Noti.success, Locales[Config.Locale]['Question_03_Answer_2_1'], Config.Noti.time)
-							PlayerState:set('Quality', PlayerState.Quality + 5)
-							PlayerState:set('Paused', false)
-						elseif Questions.Question_03.DifficultyAnswer_2 == 1 then
-							local success = lib.skillCheck(Questions.Difficulty_1.Difficulty, Questions.Difficulty_1.Key)
-							if success then
-								notifications(Config.Noti.success, Locales[Config.Locale]['Question_03_Answer_2_1'], Config.Noti.time)
-								PlayerState:set('Quality', PlayerState.Quality + 5)
-								PlayerState:set('Paused', false)
-							else
-								PlayerState:set('Paused', false)
-							end
-						elseif Questions.Question_03.DifficultyAnswer_2 == 2 then
-							local success = lib.skillCheck(Questions.Difficulty_2.Difficulty, Questions.Difficulty_2.Key)
-							if success then
-								notifications(Config.Noti.success, Locales[Config.Locale]['Question_03_Answer_2_1'], Config.Noti.time)
-								PlayerState:set('Quality', PlayerState.Quality + 5)
-								PlayerState:set('Paused', false)
-							else
-								PlayerState:set('Paused', false)
-							end
-						end
-					else
-						notifications(Config.Noti.success, Locales[Config.Locale]['Question_03_Answer_2_1'], Config.Noti.time)
-						PlayerState:set('Quality', PlayerState.Quality + 5)
-						PlayerState:set('Paused', false)
-					end
-				end,
-				icon = 'temperature-full'
-			},
-			{
-				title = Locales[Config.Locale]['Question_03_Answer_3'],
-				onSelect = function(args)
-					if Config.Debug then print('Pressed 3') end
-
-					lib.hideMenu(true)
-					Wait(20)
-
-					local Questions = Config.SkillCheck.Questions
-
-					if not Questions.DisableAll and Questions.Question_03.Enabled then
-						if Questions.Question_03.DifficultyAnswer_3 == 0 then
-							notifications(Config.Noti.error, Locales[Config.Locale]['Question_03_Answer_3_1'], Config.Noti.time)
-							PlayerState:set('Paused', false)
-							PlayerState:set('Quality', PlayerState.Quality - 4)
-						elseif Questions.Question_03.DifficultyAnswer_3 == 1 then
-							local success = lib.skillCheck(Questions.Difficulty_1.Difficulty, Questions.Difficulty_1.Key)
-							if success then
-								notifications(Config.Noti.error, Locales[Config.Locale]['Question_03_Answer_3_1'], Config.Noti.time)
-								PlayerState:set('Paused', false)
-								PlayerState:set('Quality', PlayerState.Quality - 4)
-							else
-								notifications(Config.Noti.error, Locales[Config.Locale]['Question_03_Answer_3_1'], Config.Noti.time)
-								PlayerState:set('Paused', false)
-								PlayerState:set('Quality', PlayerState.Quality - 4)
-							end
-						elseif Questions.Question_03.DifficultyAnswer_3 == 2 then
-							local success = lib.skillCheck(Questions.Difficulty_2.Difficulty, Questions.Difficulty_2.Key)
-							if success then
-								notifications(Config.Noti.error, Locales[Config.Locale]['Question_03_Answer_3_1'], Config.Noti.time)
-								PlayerState:set('Paused', false)
-								PlayerState:set('Quality', PlayerState.Quality - 4)
-							else
-								notifications(Config.Noti.error, Locales[Config.Locale]['Question_03_Answer_3_1'], Config.Noti.time)
-								PlayerState:set('Paused', false)
-								PlayerState:set('Quality', PlayerState.Quality - 4)
-							end
-						end
-					else
-						notifications(Config.Noti.error, Locales[Config.Locale]['Question_03_Answer_3_1'], Config.Noti.time)
-						PlayerState:set('Paused', false)
-						PlayerState:set('Quality', PlayerState.Quality - 4)
-					end
-				end,
-				icon = 'temperature-quarter'
-			},
-		},
-	})
-	lib.showContext('Event_03')
-end)
-
-RegisterNetEvent('esx_methcar:Context4')
-AddEventHandler('esx_methcar:Context4', function()
-	lib.registerContext({
-		id = 'Event_04',
-		title = Locales[Config.Locale]['Question_04'],
-		onExit = function()
-			Wait(20)
-			TriggerEvent('esx_methcar:stop')
-		end,
-		options = {
-			{title = Locales[Config.Locale]['Choose_Option'], icon = 'question', description = Locales[Config.Locale]['Update1'] .. PlayerState.Progress .. Locales[Config.Locale]['Update2']},
-			{
-				title = Locales[Config.Locale]['Question_04_Answer_1'],
-				onSelect = function(args)
-					if Config.Debug then print('Pressed 1') end
 					
-					lib.hideMenu(true)
-					Wait(20)
-
-					notifications(Config.Noti.error, Locales[Config.Locale]['Question_04_Answer_1_1'], Config.Noti.time)
-					PlayerState:set('Quality', PlayerState.Quality - 3)
+					notifications(Config.Noti.success, Locales[Config.Locale]['Question_07_Answer_1_1'], Config.Noti.time)
+					PlayerState:set('Quality', PlayerState.Quality + 1)
 					PlayerState:set('Paused', false)
 				end,
-				icon = 'circle-pause'
+				icon = 'face-grimace'
 			},
 			{
-				title = Locales[Config.Locale]['Question_04_Answer_2'],
-				onSelect = function(args)
-					if Config.Debug then print('Pressed 2') end
-
-					lib.hideMenu(true)
-					Wait(20)
-
-					local Questions = Config.SkillCheck.Questions
-
-					if not Questions.DisableAll and Questions.Question_04.Enabled then
-						if Questions.Question_04.DifficultyAnswer_2 == 0 then
-							notifications(Config.Noti.error, Locales[Config.Locale]['Question_04_Answer_2_1'], Config.Noti.time)
-							PlayerState:set('Paused', false)
-							PlayerState:set('Quality', PlayerState.Quality - 1)
-						elseif Questions.Question_04.DifficultyAnswer_2 == 1 then
-							local success = lib.skillCheck(Questions.Difficulty_1.Difficulty, Questions.Difficulty_1.Key)
-							if success then
-								notifications(Config.Noti.error, Locales[Config.Locale]['Question_04_Answer_2_1'], Config.Noti.time)
-								PlayerState:set('Paused', false)
-								PlayerState:set('Quality', PlayerState.Quality - 1)
-							else
-								notifications(Config.Noti.error, Locales[Config.Locale]['Question_04_Answer_2_1'], Config.Noti.time)
-								PlayerState:set('Quality', PlayerState.Quality - 3)
-								PlayerState:set('Paused', false)
-							end
-						elseif Questions.Question_04.DifficultyAnswer_2 == 2 then
-							local success = lib.skillCheck(Questions.Difficulty_2.Difficulty, Questions.Difficulty_2.Key)
-							if success then
-								notifications(Config.Noti.error, Locales[Config.Locale]['Question_04_Answer_2_1'], Config.Noti.time)
-								PlayerState:set('Paused', false)
-								PlayerState:set('Quality', PlayerState.Quality - 1)
-							else
-								notifications(Config.Noti.error, Locales[Config.Locale]['Question_04_Answer_2_1'], Config.Noti.time)
-								PlayerState:set('Quality', PlayerState.Quality - 3)
-								PlayerState:set('Paused', false)
-							end
-						end
-					else
-						notifications(Config.Noti.error, Locales[Config.Locale]['Question_04_Answer_2_1'], Config.Noti.time)
-						PlayerState:set('Paused', false)
-						PlayerState:set('Quality', PlayerState.Quality - 1)
-					end
-				end,
-				icon = 'syringe'
-			},
-			{
-				title = Locales[Config.Locale]['Question_04_Answer_3'],
-				onSelect = function(args)
-					if Config.Debug then print('Pressed 3') end
-
-					lib.hideMenu(true)
-					Wait(20)
-
-					local Questions = Config.SkillCheck.Questions
-
-					if not Questions.DisableAll and Questions.Question_04.Enabled then
-						if Questions.Question_04.DifficultyAnswer_3 == 0 then
-							notifications(Config.Noti.success, Locales[Config.Locale]['Question_04_Answer_3_1'], Config.Noti.time)
-							PlayerState:set('Paused', false)
-							PlayerState:set('Quality', PlayerState.Quality + 3)
-						elseif Questions.Question_04.DifficultyAnswer_3 == 1 then
-							local success = lib.skillCheck(Questions.Difficulty_1.Difficulty, Questions.Difficulty_1.Key)
-							if success then
-								notifications(Config.Noti.success, Locales[Config.Locale]['Question_04_Answer_3_1'], Config.Noti.time)
-								PlayerState:set('Paused', false)
-								PlayerState:set('Quality', PlayerState.Quality + 3)
-							else
-								notifications(Config.Noti.error,Locales[Config.Locale]['Question_04_Answer_1_1'], Config.Noti.time)
-								PlayerState:set('Quality', PlayerState.Quality - 3)
-								PlayerState:set('Paused', false)
-							end
-						elseif Questions.Question_04.DifficultyAnswer_3 == 2 then
-							local success = lib.skillCheck(Questions.Difficulty_2.Difficulty, Questions.Difficulty_2.Key)
-							if success then
-								notifications(Config.Noti.success, Locales[Config.Locale]['Question_04_Answer_3_1'], Config.Noti.time)
-								PlayerState:set('Paused', false)
-								PlayerState:set('Quality', PlayerState.Quality + 3)
-							else
-								notifications(Config.Noti.error,Locales[Config.Locale]['Question_04_Answer_1_1'], Config.Noti.time)
-								PlayerState:set('Quality', PlayerState.Quality - 3)
-								PlayerState:set('Paused', false)
-							end
-						end
-					else
-						notifications(Config.Noti.success, Locales[Config.Locale]['Question_04_Answer_3_1'], Config.Noti.time)
-						PlayerState:set('Paused', false)
-						PlayerState:set('Quality', PlayerState.Quality + 3)
-					end
-				end,
-				icon = 'car-battery'
-			},
-		},
-	})
-	lib.showContext('Event_04')
-end)
-
-RegisterNetEvent('esx_methcar:Context5')
-AddEventHandler('esx_methcar:Context5', function()
-	lib.registerContext({
-		id = 'Event_05',
-		title = Locales[Config.Locale]['Question_05'],
-		onExit = function()
-			Wait(20)
-			TriggerEvent('esx_methcar:stop')
-		end,
-		options = {
-			{title = Locales[Config.Locale]['Choose_Option'], icon = 'question', description = Locales[Config.Locale]['Update1'] .. PlayerState.Progress .. Locales[Config.Locale]['Update2']},
-			{
-				title = Locales[Config.Locale]['Question_05_Answer_1'],
-				onSelect = function(args)
-					if Config.Debug then print('Pressed 1') end
-
-					lib.hideContext(true)
-					Wait(20)
-
-					local Questions = Config.SkillCheck.Questions
-
-					if not Questions.DisableAll and Questions.Question_05.Enabled then
-						if Questions.Question_05.DifficultyAnswer_1 == 0 then
-							notifications(Config.Noti.success, Locales[Config.Locale]['Question_05_Answer_1_1'], Config.Noti.time)
-							PlayerState:set('Quality', PlayerState.Quality + 4)
-							PlayerState:set('Paused', false)
-						elseif Questions.Question_05.DifficultyAnswer_1 == 1 then
-							local success = lib.skillCheck(Questions.Difficulty_1.Difficulty, Questions.Difficulty_1.Key)
-							if success then
-								notifications(Config.Noti.success, Locales[Config.Locale]['Question_05_Answer_1_1'], Config.Noti.time)
-								PlayerState:set('Quality', PlayerState.Quality + 4)
-								PlayerState:set('Paused', false)
-							else
-								notifications(Config.Noti.error, Locales[Config.Locale]['Question_05_Answer_1_2'], Config.Noti.time)
-								PlayerState:set('Paused', false)
-							end
-						elseif Questions.Question_05.DifficultyAnswer_1 == 2 then
-							local success = lib.skillCheck(Questions.Difficulty_2.Difficulty, Questions.Difficulty_2.Key)
-							if success then
-								notifications(Config.Noti.success, Locales[Config.Locale]['Question_05_Answer_1_1'], Config.Noti.time)
-								PlayerState:set('Quality', PlayerState.Quality + 4)
-								PlayerState:set('Paused', false)
-							else
-								notifications(Config.Noti.error, Locales[Config.Locale]['Question_05_Answer_1_2'], Config.Noti.time)
-								PlayerState:set('Paused', false)
-							end
-						end
-					else
-						notifications(Config.Noti.success, Locales[Config.Locale]['Question_05_Answer_1_1'], Config.Noti.time)
-						PlayerState:set('Quality', PlayerState.Quality + 4)
-						PlayerState:set('Paused', false)
-					end
-				end,
-				icon = 'bottle-droplet'
-			},
-			{
-				title = Locales[Config.Locale]['Question_05_Answer_2'],
+				title = Locales[Config.Locale]['Question_07_Answer_2'],
 				onSelect = function(args)
 					if Config.Debug then print('Pressed 2') end
 										
 					lib.hideContext(true)
 					Wait(20)
-
-					notifications(Config.Noti.info, Locales[Config.Locale]['Question_05_Answer_2_1'], Config.Noti.time)
+					
+					notifications(Config.Noti.error, Locales[Config.Locale]['Question_07_Answer_2_1'], Config.Noti.time)
 					PlayerState:set('Paused', false)
+					PlayerState:set('Quality', PlayerState.Quality - 2)
 				end,
-				icon = 'trash'
+				icon = 'tree'
 			},
 			{
-				title = Locales[Config.Locale]['Question_05_Answer_3'],
+				title = Locales[Config.Locale]['Question_07_Answer_3'],
 				onSelect = function(args)
 					if Config.Debug then print('Pressed 3') end
-										
+															
 					lib.hideContext(true)
 					Wait(20)
 
-					notifications(Config.Noti.error, Locales[Config.Locale]['Question_05_Answer_3_1'], Config.Noti.time)
+					notifications(Config.Noti.error, Locales[Config.Locale]['Question_07_Answer_3_1'], Config.Noti.time)
 					PlayerState:set('Paused', false)
+					PlayerState:set('Quality', PlayerState.Quality - 1)
 				end,
-				icon = 'bottle-droplet'
+				icon = 'chair'
 			},
 		},
 	})
-	lib.showContext('Event_05')
-end)
-
-RegisterNetEvent('esx_methcar:Context6')
-AddEventHandler('esx_methcar:Context6', function()
 	lib.registerContext({
 		id = 'Event_06',
 		title = Locales[Config.Locale]['Question_06'],
@@ -1002,14 +575,9 @@ AddEventHandler('esx_methcar:Context6', function()
 			},
 		},
 	})
-	lib.showContext('Event_06')
-end)
-
-RegisterNetEvent('esx_methcar:Context7')
-AddEventHandler('esx_methcar:Context7', function()
 	lib.registerContext({
-		id = 'Event_07',
-		title = Locales[Config.Locale]['Question_07'],
+		id = 'Event_05',
+		title = Locales[Config.Locale]['Question_05'],
 		onExit = function()
 			Wait(20)
 			TriggerEvent('esx_methcar:stop')
@@ -1017,65 +585,7 @@ AddEventHandler('esx_methcar:Context7', function()
 		options = {
 			{title = Locales[Config.Locale]['Choose_Option'], icon = 'question', description = Locales[Config.Locale]['Update1'] .. PlayerState.Progress .. Locales[Config.Locale]['Update2']},
 			{
-				title = Locales[Config.Locale]['Question_07_Answer_1'],
-				onSelect = function(args)
-					if Config.Debug then print('Pressed 1') end
-					
-					lib.hideContext(true)
-					Wait(20)
-					
-					notifications(Config.Noti.success, Locales[Config.Locale]['Question_07_Answer_1_1'], Config.Noti.time)
-					PlayerState:set('Quality', PlayerState.Quality + 1)
-					PlayerState:set('Paused', false)
-				end,
-				icon = 'face-grimace'
-			},
-			{
-				title = Locales[Config.Locale]['Question_07_Answer_2'],
-				onSelect = function(args)
-					if Config.Debug then print('Pressed 2') end
-										
-					lib.hideContext(true)
-					Wait(20)
-					
-					notifications(Config.Noti.error, Locales[Config.Locale]['Question_07_Answer_2_1'], Config.Noti.time)
-					PlayerState:set('Paused', false)
-					PlayerState:set('Quality', PlayerState.Quality - 2)
-				end,
-				icon = 'tree'
-			},
-			{
-				title = Locales[Config.Locale]['Question_07_Answer_3'],
-				onSelect = function(args)
-					if Config.Debug then print('Pressed 3') end
-															
-					lib.hideContext(true)
-					Wait(20)
-
-					notifications(Config.Noti.error, Locales[Config.Locale]['Question_07_Answer_3_1'], Config.Noti.time)
-					PlayerState:set('Paused', false)
-					PlayerState:set('Quality', PlayerState.Quality - 1)
-				end,
-				icon = 'chair'
-			},
-		},
-	})
-	lib.showContext('Event_07')
-end)
-
-RegisterNetEvent('esx_methcar:Context8')
-AddEventHandler('esx_methcar:Context8', function()
-	lib.registerContext({
-		id = 'Event_08',
-		title = Locales[Config.Locale]['Question_08'],
-		onExit = function()
-			Wait(20)
-			TriggerEvent('esx_methcar:stop')
-		end,
-		options = {
-			{title = Locales[Config.Locale]['Choose_Option'], icon = 'question', description = Locales[Config.Locale]['Update1'] .. PlayerState.Progress .. Locales[Config.Locale]['Update2']},
-			{
-				title = Locales[Config.Locale]['Question_08_Answer_1'],
+				title = Locales[Config.Locale]['Question_05_Answer_1'],
 				onSelect = function(args)
 					if Config.Debug then print('Pressed 1') end
 
@@ -1084,72 +594,547 @@ AddEventHandler('esx_methcar:Context8', function()
 
 					local Questions = Config.SkillCheck.Questions
 
-					if not Questions.DisableAll and Questions.Question_08.Enabled then
-						if Questions.Question_08.DifficultyAnswer_1 == 0 then
-							notifications(Config.Noti.success, Locales[Config.Locale]['Question_08_Answer_1_1'], Config.Noti.time)
-							PlayerState:set('Quality', PlayerState.Quality + 1)
+					if not Questions.DisableAll and Questions.Question_05.Enabled then
+						if Questions.Question_05.DifficultyAnswer_1 == 0 then
+							notifications(Config.Noti.success, Locales[Config.Locale]['Question_05_Answer_1_1'], Config.Noti.time)
+							PlayerState:set('Quality', PlayerState.Quality + 4)
 							PlayerState:set('Paused', false)
-						elseif Questions.Question_08.DifficultyAnswer_1 == 1 then
+						elseif Questions.Question_05.DifficultyAnswer_1 == 1 then
 							local success = lib.skillCheck(Questions.Difficulty_1.Difficulty, Questions.Difficulty_1.Key)
 							if success then
-								notifications(Config.Noti.success, Locales[Config.Locale]['Question_08_Answer_1_1'], Config.Noti.time)
-								PlayerState:set('Quality', PlayerState.Quality + 1)
+								notifications(Config.Noti.success, Locales[Config.Locale]['Question_05_Answer_1_1'], Config.Noti.time)
+								PlayerState:set('Quality', PlayerState.Quality + 4)
 								PlayerState:set('Paused', false)
 							else
-								notifications(Config.Noti.sucess, Locales[Config.Locale]['Question_08_Answer_2_1'], Config.Noti.time)
+								notifications(Config.Noti.error, Locales[Config.Locale]['Question_05_Answer_1_2'], Config.Noti.time)
 								PlayerState:set('Paused', false)
-								PlayerState:set('Quality', PlayerState.Quality + 1)
 							end
-						elseif Questions.Question_08.DifficultyAnswer_1 == 2 then
+						elseif Questions.Question_05.DifficultyAnswer_1 == 2 then
 							local success = lib.skillCheck(Questions.Difficulty_2.Difficulty, Questions.Difficulty_2.Key)
 							if success then
-								notifications(Config.Noti.success, Locales[Config.Locale]['Question_08_Answer_1_1'], Config.Noti.time)
-								PlayerState:set('Quality', PlayerState.Quality + 1)
+								notifications(Config.Noti.success, Locales[Config.Locale]['Question_05_Answer_1_1'], Config.Noti.time)
+								PlayerState:set('Quality', PlayerState.Quality + 4)
 								PlayerState:set('Paused', false)
 							else
-								notifications(Config.Noti.sucess, Locales[Config.Locale]['Question_08_Answer_2_1'], Config.Noti.time)
+								notifications(Config.Noti.error, Locales[Config.Locale]['Question_05_Answer_1_2'], Config.Noti.time)
 								PlayerState:set('Paused', false)
-								PlayerState:set('Quality', PlayerState.Quality + 1)
 							end
 						end
 					else
-						notifications(Config.Noti.success, Locales[Config.Locale]['Question_08_Answer_1_1'], Config.Noti.time)
-						PlayerState:set('Quality', PlayerState.Quality + 1)
+						notifications(Config.Noti.success, Locales[Config.Locale]['Question_05_Answer_1_1'], Config.Noti.time)
+						PlayerState:set('Quality', PlayerState.Quality + 4)
 						PlayerState:set('Paused', false)
 					end
 				end,
-				icon = 'wine-glass-empty'
+				icon = 'bottle-droplet'
 			},
 			{
-				title = Locales[Config.Locale]['Question_08_Answer_2'],
+				title = Locales[Config.Locale]['Question_05_Answer_2'],
 				onSelect = function(args)
 					if Config.Debug then print('Pressed 2') end
-
+										
 					lib.hideContext(true)
 					Wait(20)
 
-					notifications(Config.Noti.sucess, Locales[Config.Locale]['Question_08_Answer_2_1'], Config.Noti.time)
+					notifications(Config.Noti.info, Locales[Config.Locale]['Question_05_Answer_2_1'], Config.Noti.time)
 					PlayerState:set('Paused', false)
-					PlayerState:set('Quality', PlayerState.Quality + 1)
-					
 				end,
-				icon = 'flask'
+				icon = 'trash'
 			},
 			{
-				title = Locales[Config.Locale]['Question_08_Answer_3'],
+				title = Locales[Config.Locale]['Question_05_Answer_3'],
 				onSelect = function(args)
 					if Config.Debug then print('Pressed 3') end
-					
+										
 					lib.hideContext(true)
 					Wait(20)
 
-					notifications(Config.Noti.error, Locales[Config.Locale]['Question_08_Answer_3_1'], Config.Noti.time)
+					notifications(Config.Noti.error, Locales[Config.Locale]['Question_05_Answer_3_1'], Config.Noti.time)
 					PlayerState:set('Paused', false)
-					PlayerState:set('Quality', PlayerState.Quality - 1)
 				end,
-				icon = 'wine-glass-empty'
+				icon = 'bottle-droplet'
 			},
 		},
 	})
-	lib.showContext('Event_08')
+	lib.registerContext({
+		id = 'Event_04',
+		title = Locales[Config.Locale]['Question_04'],
+		onExit = function()
+			Wait(20)
+			TriggerEvent('esx_methcar:stop')
+		end,
+		options = {
+			{title = Locales[Config.Locale]['Choose_Option'], icon = 'question', description = Locales[Config.Locale]['Update1'] .. PlayerState.Progress .. Locales[Config.Locale]['Update2']},
+			{
+				title = Locales[Config.Locale]['Question_04_Answer_1'],
+				onSelect = function(args)
+					if Config.Debug then print('Pressed 1') end
+					
+					lib.hideMenu(true)
+					Wait(20)
+
+					notifications(Config.Noti.error, Locales[Config.Locale]['Question_04_Answer_1_1'], Config.Noti.time)
+					PlayerState:set('Quality', PlayerState.Quality - 3)
+					PlayerState:set('Paused', false)
+				end,
+				icon = 'circle-pause'
+			},
+			{
+				title = Locales[Config.Locale]['Question_04_Answer_2'],
+				onSelect = function(args)
+					if Config.Debug then print('Pressed 2') end
+
+					lib.hideMenu(true)
+					Wait(20)
+
+					local Questions = Config.SkillCheck.Questions
+
+					if not Questions.DisableAll and Questions.Question_04.Enabled then
+						if Questions.Question_04.DifficultyAnswer_2 == 0 then
+							notifications(Config.Noti.error, Locales[Config.Locale]['Question_04_Answer_2_1'], Config.Noti.time)
+							PlayerState:set('Paused', false)
+							PlayerState:set('Quality', PlayerState.Quality - 1)
+						elseif Questions.Question_04.DifficultyAnswer_2 == 1 then
+							local success = lib.skillCheck(Questions.Difficulty_1.Difficulty, Questions.Difficulty_1.Key)
+							if success then
+								notifications(Config.Noti.error, Locales[Config.Locale]['Question_04_Answer_2_1'], Config.Noti.time)
+								PlayerState:set('Paused', false)
+								PlayerState:set('Quality', PlayerState.Quality - 1)
+							else
+								notifications(Config.Noti.error, Locales[Config.Locale]['Question_04_Answer_2_1'], Config.Noti.time)
+								PlayerState:set('Quality', PlayerState.Quality - 3)
+								PlayerState:set('Paused', false)
+							end
+						elseif Questions.Question_04.DifficultyAnswer_2 == 2 then
+							local success = lib.skillCheck(Questions.Difficulty_2.Difficulty, Questions.Difficulty_2.Key)
+							if success then
+								notifications(Config.Noti.error, Locales[Config.Locale]['Question_04_Answer_2_1'], Config.Noti.time)
+								PlayerState:set('Paused', false)
+								PlayerState:set('Quality', PlayerState.Quality - 1)
+							else
+								notifications(Config.Noti.error, Locales[Config.Locale]['Question_04_Answer_2_1'], Config.Noti.time)
+								PlayerState:set('Quality', PlayerState.Quality - 3)
+								PlayerState:set('Paused', false)
+							end
+						end
+					else
+						notifications(Config.Noti.error, Locales[Config.Locale]['Question_04_Answer_2_1'], Config.Noti.time)
+						PlayerState:set('Paused', false)
+						PlayerState:set('Quality', PlayerState.Quality - 1)
+					end
+				end,
+				icon = 'syringe'
+			},
+			{
+				title = Locales[Config.Locale]['Question_04_Answer_3'],
+				onSelect = function(args)
+					if Config.Debug then print('Pressed 3') end
+
+					lib.hideMenu(true)
+					Wait(20)
+
+					local Questions = Config.SkillCheck.Questions
+
+					if not Questions.DisableAll and Questions.Question_04.Enabled then
+						if Questions.Question_04.DifficultyAnswer_3 == 0 then
+							notifications(Config.Noti.success, Locales[Config.Locale]['Question_04_Answer_3_1'], Config.Noti.time)
+							PlayerState:set('Paused', false)
+							PlayerState:set('Quality', PlayerState.Quality + 3)
+						elseif Questions.Question_04.DifficultyAnswer_3 == 1 then
+							local success = lib.skillCheck(Questions.Difficulty_1.Difficulty, Questions.Difficulty_1.Key)
+							if success then
+								notifications(Config.Noti.success, Locales[Config.Locale]['Question_04_Answer_3_1'], Config.Noti.time)
+								PlayerState:set('Paused', false)
+								PlayerState:set('Quality', PlayerState.Quality + 3)
+							else
+								notifications(Config.Noti.error,Locales[Config.Locale]['Question_04_Answer_1_1'], Config.Noti.time)
+								PlayerState:set('Quality', PlayerState.Quality - 3)
+								PlayerState:set('Paused', false)
+							end
+						elseif Questions.Question_04.DifficultyAnswer_3 == 2 then
+							local success = lib.skillCheck(Questions.Difficulty_2.Difficulty, Questions.Difficulty_2.Key)
+							if success then
+								notifications(Config.Noti.success, Locales[Config.Locale]['Question_04_Answer_3_1'], Config.Noti.time)
+								PlayerState:set('Paused', false)
+								PlayerState:set('Quality', PlayerState.Quality + 3)
+							else
+								notifications(Config.Noti.error,Locales[Config.Locale]['Question_04_Answer_1_1'], Config.Noti.time)
+								PlayerState:set('Quality', PlayerState.Quality - 3)
+								PlayerState:set('Paused', false)
+							end
+						end
+					else
+						notifications(Config.Noti.success, Locales[Config.Locale]['Question_04_Answer_3_1'], Config.Noti.time)
+						PlayerState:set('Paused', false)
+						PlayerState:set('Quality', PlayerState.Quality + 3)
+					end
+				end,
+				icon = 'car-battery'
+			},
+		},
+	})
+	lib.registerContext({
+		id = 'Event_03',
+		title = Locales[Config.Locale]['Question_03'],
+		onExit = function()
+			Wait(20)
+			TriggerEvent('esx_methcar:stop')
+		end,
+		options = {
+			{title = Locales[Config.Locale]['Choose_Option'], icon = 'question', description = Locales[Config.Locale]['Update1'] .. PlayerState.Progress .. Locales[Config.Locale]['Update2']},
+			{
+				title = Locales[Config.Locale]['Question_03_Answer_1'],
+				onSelect = function(args)
+					if Config.Debug then print('Pressed 1') end
+
+					lib.hideMenu(true)
+					Wait(20)
+
+					notifications(Config.Noti.error, Locales[Config.Locale]['Question_03_Answer_1_1'], Config.Noti.time)
+					PlayerState:set('Paused', false)
+				end,
+				icon = 'burn'
+			},
+			{
+				title = Locales[Config.Locale]['Question_03_Answer_2'],
+				onSelect = function(args)
+					if Config.Debug then print('Pressed 2') end
+
+					lib.hideMenu(true)
+					Wait(20)
+
+					local Questions = Config.SkillCheck.Questions
+
+					if not Questions.DisableAll and Questions.Question_03.Enabled then
+						if Questions.Question_03.DifficultyAnswer_2 == 0 then
+							notifications(Config.Noti.success, Locales[Config.Locale]['Question_03_Answer_2_1'], Config.Noti.time)
+							PlayerState:set('Quality', PlayerState.Quality + 5)
+							PlayerState:set('Paused', false)
+						elseif Questions.Question_03.DifficultyAnswer_2 == 1 then
+							local success = lib.skillCheck(Questions.Difficulty_1.Difficulty, Questions.Difficulty_1.Key)
+							if success then
+								notifications(Config.Noti.success, Locales[Config.Locale]['Question_03_Answer_2_1'], Config.Noti.time)
+								PlayerState:set('Quality', PlayerState.Quality + 5)
+								PlayerState:set('Paused', false)
+							else
+								PlayerState:set('Paused', false)
+							end
+						elseif Questions.Question_03.DifficultyAnswer_2 == 2 then
+							local success = lib.skillCheck(Questions.Difficulty_2.Difficulty, Questions.Difficulty_2.Key)
+							if success then
+								notifications(Config.Noti.success, Locales[Config.Locale]['Question_03_Answer_2_1'], Config.Noti.time)
+								PlayerState:set('Quality', PlayerState.Quality + 5)
+								PlayerState:set('Paused', false)
+							else
+								PlayerState:set('Paused', false)
+							end
+						end
+					else
+						notifications(Config.Noti.success, Locales[Config.Locale]['Question_03_Answer_2_1'], Config.Noti.time)
+						PlayerState:set('Quality', PlayerState.Quality + 5)
+						PlayerState:set('Paused', false)
+					end
+				end,
+				icon = 'temperature-full'
+			},
+			{
+				title = Locales[Config.Locale]['Question_03_Answer_3'],
+				onSelect = function(args)
+					if Config.Debug then print('Pressed 3') end
+
+					lib.hideMenu(true)
+					Wait(20)
+
+					local Questions = Config.SkillCheck.Questions
+
+					if not Questions.DisableAll and Questions.Question_03.Enabled then
+						if Questions.Question_03.DifficultyAnswer_3 == 0 then
+							notifications(Config.Noti.error, Locales[Config.Locale]['Question_03_Answer_3_1'], Config.Noti.time)
+							PlayerState:set('Paused', false)
+							PlayerState:set('Quality', PlayerState.Quality - 4)
+						elseif Questions.Question_03.DifficultyAnswer_3 == 1 then
+							local success = lib.skillCheck(Questions.Difficulty_1.Difficulty, Questions.Difficulty_1.Key)
+							if success then
+								notifications(Config.Noti.error, Locales[Config.Locale]['Question_03_Answer_3_1'], Config.Noti.time)
+								PlayerState:set('Paused', false)
+								PlayerState:set('Quality', PlayerState.Quality - 4)
+							else
+								notifications(Config.Noti.error, Locales[Config.Locale]['Question_03_Answer_3_1'], Config.Noti.time)
+								PlayerState:set('Paused', false)
+								PlayerState:set('Quality', PlayerState.Quality - 4)
+							end
+						elseif Questions.Question_03.DifficultyAnswer_3 == 2 then
+							local success = lib.skillCheck(Questions.Difficulty_2.Difficulty, Questions.Difficulty_2.Key)
+							if success then
+								notifications(Config.Noti.error, Locales[Config.Locale]['Question_03_Answer_3_1'], Config.Noti.time)
+								PlayerState:set('Paused', false)
+								PlayerState:set('Quality', PlayerState.Quality - 4)
+							else
+								notifications(Config.Noti.error, Locales[Config.Locale]['Question_03_Answer_3_1'], Config.Noti.time)
+								PlayerState:set('Paused', false)
+								PlayerState:set('Quality', PlayerState.Quality - 4)
+							end
+						end
+					else
+						notifications(Config.Noti.error, Locales[Config.Locale]['Question_03_Answer_3_1'], Config.Noti.time)
+						PlayerState:set('Paused', false)
+						PlayerState:set('Quality', PlayerState.Quality - 4)
+					end
+				end,
+				icon = 'temperature-quarter'
+			},
+		},
+	})
+	lib.registerContext({
+		id = 'Event_02',
+		title = Locales[Config.Locale]['Question_02'],
+		onExit = function()
+			Wait(20)
+			TriggerEvent('esx_methcar:stop')
+		end,
+		options = {
+			{title = Locales[Config.Locale]['Choose_Option'], icon = 'question', description = Locales[Config.Locale]['Update1'] .. PlayerState.Progress .. Locales[Config.Locale]['Update2']},
+			{
+				title = Locales[Config.Locale]['Question_02_Answer_1'],
+				onSelect = function(args)
+					if Config.Debug then print('Pressed 1') end
+
+					lib.hideContext(true)
+					Wait(20)
+
+					local Questions = Config.SkillCheck.Questions
+
+					if not Questions.DisableAll and Questions.Question_02.Enabled then
+						if Questions.Question_02.DifficultyAnswer_1 == 0 then
+							PlayerState:set('Paused', false)
+							PlayerState:set('Quality', PlayerState.Quality - 1)
+						elseif Questions.Question_02.DifficultyAnswer_1 == 1 then
+							local success = lib.skillCheck(Questions.Difficulty_1.Difficulty, Questions.Difficulty_1.Key)
+							if success then
+								notifications(Config.Noti.info, Locales[Config.Locale]['Question_02_Answer_1_1'], Config.Noti.time)
+								PlayerState:set('Quality', PlayerState.Quality - 1)
+								PlayerState:set('Paused', false)
+							else
+								TriggerEvent('esx_methcar:drugged')
+								PlayerState:set('Paused', false)
+							end
+						elseif Questions.Question_02.DifficultyAnswer_1 == 2 then
+							local success = lib.skillCheck(Questions.Difficulty_2.Difficulty, Questions.Difficulty_2.Key)
+							if success then
+								notifications(Config.Noti.info, Locales[Config.Locale]['Question_02_Answer_1_1'], Config.Noti.time)
+								PlayerState:set('Quality', PlayerState.Quality - 1)
+								PlayerState:set('Paused', false)
+							else
+								TriggerEvent('esx_methcar:drugged')
+								PlayerState:set('Paused', false)
+							end
+						end
+					else
+						TriggerEvent('esx_methcar:drugged')
+						PlayerState:set('Paused', false)
+					end
+				end,
+				icon = 'window-maximize'
+			},
+			{
+				title = Locales[Config.Locale]['Question_02_Answer_2'],
+				onSelect = function(args)
+					if Config.Debug then print('Pressed 2') end
+					
+					lib.hideContext(true)
+					Wait(20)
+
+					notifications(Config.Noti.error, Locales[Config.Locale]['Question_02_Answer_2_1'], Config.Noti.time)
+					PlayerState:set('Paused', false)
+					TriggerEvent('esx_methcar:drugged')
+				end,
+				icon = 'circle-pause'
+			},
+			{
+				title = Locales[Config.Locale]['Question_02_Answer_3'],
+				onSelect = function(args)
+					if Config.Debug then print('Pressed 3') end
+
+					lib.hideContext(true)
+					Wait(20)
+
+					local Questions = Config.SkillCheck.Questions
+
+					if not Questions.DisableAll and Questions.Question_02.Enabled then
+						if Questions.Question_02.DifficultyAnswer_3 == 0 then
+							notifications(Config.Noti.succes, Locales[Config.Locale]['Question_02_Answer_3_1'], Config.Noti.time)
+							SetPedPropIndex(playerPed, 1, 26, 7, true)
+							PlayerState:set('Paused', false)
+						elseif Questions.Question_02.DifficultyAnswer_3 == 1 then
+							local success = lib.skillCheck(Questions.Difficulty_1.Difficulty, Questions.Difficulty_1.Key)
+							if success then
+								notifications(Config.Noti.succes, Locales[Config.Locale]['Question_02_Answer_3_1'], Config.Noti.time)
+								SetPedPropIndex(playerPed, 1, 26, 7, true)
+								PlayerState:set('Paused', false)
+							else
+								TriggerEvent('esx_methcar:drugged')
+								PlayerState:set('Paused', false)
+							end
+						elseif Questions.Question_02.DifficultyAnswer_3 == 2 then
+							local success = lib.skillCheck(Questions.Difficulty_2.Difficulty, Questions.Difficulty_2.Key)
+							if success then
+								notifications(Config.Noti.succes, Locales[Config.Locale]['Question_02_Answer_3_1'], Config.Noti.time)
+								SetPedPropIndex(playerPed, 1, 26, 7, true)
+								PlayerState:set('Paused', false)
+							else
+								TriggerEvent('esx_methcar:drugged')
+								PlayerState:set('Paused', false)
+							end
+						end
+					else
+						notifications(Config.Noti.succes, Locales[Config.Locale]['Question_02_Answer_3_1'], Config.Noti.time)
+						SetPedPropIndex(playerPed, 1, 26, 7, true)
+						PlayerState:set('Paused', false)
+					end
+				end,
+				icon = 'mask-ventilator'
+			},
+		},
+	})
+	lib.registerContext({
+		id = 'Event_01',
+		title = Locales[Config.Locale]['Question_01'],
+		onExit = function()
+			Wait(20)
+			TriggerEvent('esx_methcar:stop')
+		end,
+		options = {
+			{title = Locales[Config.Locale]['Choose_Option'], icon = 'question', description = Locales[Config.Locale]['Update1'] .. PlayerState.Progress .. Locales[Config.Locale]['Update2']},
+			{
+				title =  Locales[Config.Locale]['Question_01_Answer_1'],
+				onSelect = function(args)
+					if Config.Debug then print('Pressed 1') end
+
+					lib.hideContext(true)
+					Wait(20)
+
+					local Questions = Config.SkillCheck.Questions
+
+					local pos = GetEntityCoords(PlayerPedId())
+					if not Questions.DisableAll and Questions.Question_01.Enabled then
+						if Questions.Question_01.DifficultyAnswer_1 == 0 then
+							PlayerState:set('Paused', false)
+						elseif Questions.Question_01.DifficultyAnswer_1 == 1 then
+							local success = lib.skillCheck(Questions.Difficulty_1.Difficulty, Questions.Difficulty_1.Key)
+							if success then
+								PlayerState:set('Paused', false)
+							else
+								TriggerServerEvent('esx_methcar:blow', pos.x, pos.y, pos.z)
+							end
+						elseif Questions.Question_01.DifficultyAnswer_1 == 2 then
+							local success = lib.skillCheck(Questions.Difficulty_2.Difficulty, Questions.Difficulty_2.Key)
+							if success then
+								PlayerState:set('Paused', false)
+							else
+								TriggerServerEvent('esx_methcar:blow', pos.x, pos.y, pos.z)
+							end
+						end
+					else
+						PlayerState:set('Paused', false)
+					end
+					PlayerState:set('Quality', PlayerState.Quality - 3)
+				end,
+				icon = 'tape'
+			},
+			{
+				title = Locales[Config.Locale]['Question_01_Answer_2'],
+				onSelect = function(args)
+					if Config.Debug then print('Pressed 2') end
+					
+					lib.hideContext(true)
+					Wait(20)
+
+					local pos = GetEntityCoords(PlayerPedId())
+					notifications(Config.Noti.error, Locales[Config.Locale]['Question_01_Fail'], Config.Noti.time)
+					TriggerServerEvent('esx_methcar:blow', pos.x, pos.y, pos.z)
+					SetVehicleEngineHealth(CurrentVehicle, 0.0)
+
+					PlayerState:set('Quality', 0)
+					PlayerState:set('Cooking', false)
+					displayed = false
+					ApplyDamageToPed(PlayerPedId(), 90, false)
+					if Config.Debug then print('Stopped making Drugs') end
+				end,
+				icon = 'circle-pause'
+			},
+			{
+				title = Locales[Config.Locale]['Question_01_Answer_3'],
+				onSelect = function(args)
+					if Config.Debug then print('Pressed 3') end
+
+					lib.hideContext(true)
+					Wait(20)
+
+					local Questions = Config.SkillCheck.Questions
+
+					local pos = GetEntityCoords(PlayerPedId())
+					if not Questions.DisableAll and Questions.Question_01.Enabled then
+						if Questions.Question_01.DifficultyAnswer_3 == 0 then
+							PlayerState:set('Paused', false)
+							PlayerState:set('Quality', PlayerState.Quality + 5)
+						elseif Questions.Question_01.DifficultyAnswer_3 == 1 then
+							local success = lib.skillCheck(Questions.Difficulty_1.Difficulty, Questions.Difficulty_1.Key)
+							if success then
+								notifications(Config.Noti.success, Locales[Config.Locale]['Question_01_Answer_3_1'], Config.Noti.time)
+								PlayerState:set('Quality', PlayerState.Quality + 5)
+								PlayerState:set('Paused', false)
+							else
+								TriggerServerEvent('esx_methcar:blow', pos.x, pos.y, pos.z)
+							end
+						elseif Questions.Question_01.DifficultyAnswer_3 == 2 then
+							local success = lib.skillCheck(Questions.Difficulty_2.Difficulty, Questions.Difficulty_2.Key)
+							if success then
+								notifications(Config.Noti.success, Locales[Config.Locale]['Question_01_Answer_3_1'], Config.Noti.time)
+								PlayerState:set('Quality', PlayerState.Quality + 5)
+								PlayerState:set('Paused', false)
+							else
+								TriggerServerEvent('esx_methcar:blow', pos.x, pos.y, pos.z)
+							end
+						end
+					else
+						PlayerState:set('Quality', PlayerState.Quality + 5)
+						PlayerState:set('Paused', false)
+					end
+				end,
+				icon = 'wrench'
+			},
+		},
+	})
+end)
+
+RegisterInput = function(command_name, label, input_group, key, on_press, on_release)
+    RegisterCommand(on_release ~= nil and "+" .. command_name or command_name, on_press)
+    Core.Input[command_name] = on_release ~= nil and HashString("+" .. command_name) or HashString(command_name)
+    if on_release then
+        RegisterCommand("-" .. command_name, on_release)
+    end
+    RegisterKeyMapping(on_release ~= nil and "+" .. command_name or command_name, label, input_group, key)
+end
+
+HashString = function(str)
+    local format = string.format
+    local upper = string.upper
+    local gsub = string.gsub
+    local hash = joaat(str)
+    local input_map = format("~INPUT_%s~", upper(format("%x", hash)))
+    input_map = string.gsub(input_map, "FFFFFFFF", "")
+
+    return input_map
+end
+
+if (Config.StartProduction.Key.Enabled) then
+	RegisterInput("StartProduction", "Start meth production", "keyboard", Config.StartProduction.Key.StartKey, function()
+		TriggerEvent('esx_methcar:checkstart')
+	end)
+end
+
+RegisterInput("StopProduction", "Stop production", "keyboard", 'F', function()
+	if (PlayerState.Cooking) then
+		TriggerEvent('esx_methcar:stop')
+	end
 end)
