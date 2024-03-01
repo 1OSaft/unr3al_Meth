@@ -1,4 +1,4 @@
-# unr3al_meth
+# Use release 2.0.8
 
 This resource was created as a free meth script
 
