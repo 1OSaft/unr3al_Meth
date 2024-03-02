@@ -4,7 +4,7 @@ This resource was created as a free meth script
 
 <b>Features:</b>
 - 0.0 ms Usage
-- Customizable items and cooking zones
+- Customizable items and meth recipes
 - Compatibility for ESX
 
 ## Installation
