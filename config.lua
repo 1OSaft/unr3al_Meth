@@ -24,10 +24,19 @@ Config.Inventory = {
     oxSplit = true, -- if true, the player only receives the amount he can carry
 }
 
+-- Time between every % update
+Config.PauseTime = 4000
+
+-- % every update gets added
+Config.Progress = {
+    Min = 5,
+    Max = 10
+}
+
 Config.Police                     = 'police'            -- Your Police society name
 Config.PoliceCount                = 0
 
-Config.Cam = true --Enable the new camera system
+Config.Cam = false --Enable the new camera system
 
 Config.LogType = 'disabled' --Valid options are 'ox_lib', 'discord' or 'disabled'
 
@@ -37,13 +46,9 @@ Config.Items = {
     EnableDifferentMethTypes = true, -- If you disabble the different meth types the input dialog disappeares and it takes the values out of the Easy type
 
     Easy = {
-        Item1 = {
-            ItemName = 'acetone',
-            Count = 5
-        },
-        Item2 = {
-            ItemName = 'lithium',
-            Count = 2
+        Ingredients = {
+            ["acetone"] = 1,
+            ["lithium"] = 1,
         },
         Meth = {
             ItemName = 'meth',
@@ -54,13 +59,9 @@ Config.Items = {
         }
     },
     Medium = {
-        Item1 = {
-            ItemName = 'acetone',
-            Count = 8
-        },
-        Item2 = {
-            ItemName = 'lithium',
-            Count = 4
+        Ingredients = {
+            ["acetone"] = 8,
+            ["lithium"] = 4,
         },
         Meth = {
             ItemName = 'meth',
@@ -71,13 +72,9 @@ Config.Items = {
         }
     },
     Hard = {
-        Item1 = {
-            ItemName = 'acetone',
-            Count = 12
-        },
-        Item2 = {
-            ItemName = 'lithium',
-            Count = 8
+        Ingredients = {
+            ["acetone"] = 12,
+            ["lithium"] = 8,
         },
         Meth = {
             ItemName = 'meth',

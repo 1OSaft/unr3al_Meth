@@ -5,17 +5,6 @@ Config.ChangeMiniGame = 3
 
 ----------------------------------------------------------------
 
--- Time between every % update
-Config.PauseTime = 4000
-
--- % every update gets added
-Config.Progress = {
-    Min = 1,
-    Max = 5
-}
-
-----------------------------------------------------------------
-
 Config.DrugEffectLengh = 600000 --5min
 Config.SmokeColor = 'orange' --orange, white or black
 
@@ -86,5 +75,4 @@ Config.SkillCheck = {
             DifficultyAnswer_1 = 1,
         }
     }
-
 }
