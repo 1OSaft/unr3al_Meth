@@ -1,174 +1,139 @@
 print("Unr3al Meth by 1OSaft")
+local invstate = GetResourceState('ox_inventory')
+if (invstate == 'started' and Config.Debug) then
+	print("ox_inventory detected")
+end
 
-RegisterServerEvent('esx_methcar:start')
-AddEventHandler('esx_methcar:start', function()
-	local _source = source
-	local xPlayer = ESX.GetPlayerFromId(_source)
-	local pos = GetEntityCoords(GetPlayerPed(_source))
+local methMakers = {}
 
-	if Config.LogType == 'discord' then
-		DiscordLogs("start", "Started Cooking", "green", {
-			{name = "Player Informations", value = " ", inline = false},
-			{name = "ID", value = tostring(_source), inline = true},
-			{name = "Name", value = tostring(xPlayer.name), inline = true},
-			{name = "Identifier", value = tostring(xPlayer.identifier), inline = true},
-			{name = "Cords", value = " ", inline = false},
-			{name = "X", value = tostring(pos.x), inline = true},
-			{name = "Y", value = tostring(pos.y), inline = true},
-			{name = "Z", value = tostring(pos.z), inline = true},
-		})
-	elseif Config.LogType == 'ox_lib' then
-		lib.logger(xPlayer.identifier, 'Started Cooking Meth', 'Started Cooking at: '..tostring(pos))
-	elseif Config.LogType == 'disabled' then
-	else
-		print("MISSING LOG TYPE")
+AddEventHandler('playerDropped', function()
+    if methMakers[source] then
+        methMakers[source] = nil
+    end
+end)
+
+if (Config.StartProduction.Item.Enabled) then
+	ESX.RegisterUsableItem(Config.StartProduction.Item.ItemName, function(source)
+		local xPlayer = ESX.GetPlayerFromId(source)
+		if (Config.StartProduction.Item.ConsumeOnStart) then
+			xPlayer.removeInventoryItem(Config.StartProduction.Item.ItemName, 1)
+		end
+		--TriggerClientEvent('esx_methcar:checkstart', xPlayer.source)
+		TriggerEvent('unr3al_meth:server:start')
+	end)
+end
+
+RegisterNetEvent('unr3al_meth:server:stopProduction')
+AddEventHandler('unr3al_meth:server:stopProduction', function(source, netId)
+	local entity = NetworkGetEntityFromNetworkId(netId)
+	local src = source
+	if not DoesEntityExist(entity) or not methMakers[src] then
+		return
 	end
+	TriggerClientEvent('unr3al_meth:client:stop', src, netId)
+	local Player = ESX.GetPlayerFromId(src)
+	local Players = ESX.GetExtendedPlayers()
 
+	for k, Player in pairs(Players) do
+		TriggerClientEvent('unr3al_meth:client:smoke', Player.source, true, netId)
+	end
+	FreezeEntityPosition(methMakers[src].vehicle, false)
+	methMakers[src] = nil
+end)
+
+RegisterServerEvent('unr3al_meth:server:start')
+AddEventHandler('unr3al_meth:server:start', function(netId)
+	local src = source
+	local entity = NetworkGetEntityFromNetworkId(netId)
+	local ped = GetPlayerPed(src)
+    local canContinue = false
+    local Player = ESX.GetPlayerFromId(src)
+	local vehicle = GetVehiclePedIsIn(ped, false)
+
+    if methMakers[src] or not DoesEntityExist(entity) or GetEntityModel(entity) ~= `journey` then
+        return
+    end
+	if not GetPedInVehicleSeat(vehicle, 2) == 0 or not GetPedInVehicleSeat(vehicle, 2) == ped then
+		return
+	end
+	local cops = ESX.GetExtendedPlayers('job', Config.Police)
+	if #cops < Config.PoliceCount then
+		TriggerClientEvent('unr3al_meth:client:notify', src, Config.Noti.error, Locales[Config.Locale]['Not_Enough_Cops'])
+		return
+	end
+	local input = lib.callback.await('unr3al_meth:client:getMethType', src, netId)
+	methType = input [1]
 	if Config.Debug then print("Trying to remove Players Items") end
 
-	if Config.Inventory.Type == 'ox_inventory' then
-		local Acetone = exports.ox_inventory:GetItemCount(xPlayer.source, Config.Item.Acetone)
-		local Lithium = exports.ox_inventory:GetItemCount(xPlayer.source, Config.Item.Lithium)
-		local Methlab = exports.ox_inventory:GetItemCount(xPlayer.source, Config.Item.Methlab)
-
-		if Acetone >= 5 and Lithium >= 2 and Methlab >= 1 then
-			exports.ox_inventory:RemoveItem(xPlayer.source, Config.Item.Acetone, 5)
-			exports.ox_inventory:RemoveItem(xPlayer.source, Config.Item.Lithium, 2)
-			TriggerClientEvent('esx_methcar:startprod', _source)
-			if Config.Debug then print("Removed Starting Items") end
+	local Enough = true
+	for kItem, vCount in pairs(Config.Items[methType].Ingredients) do
+		local item = Player.hasItem(kItem)
+		if item.count >= vCount then
 		else
-			TriggerClientEvent('esx_methcar:notify', _source, Config.Noti.error, "Not enough supplies to start producing Meth")
+			Enough = false
 		end
+	end
+	local methlab = Player.hasItem(Config.Items.Methlab)
+	if Enough and methlab.count >= 1 then
+		for kItem, vCount in pairs(Config.Items[methType].Ingredients) do
+			Player.removeInventoryItem(kItem, vCount)
+		end
+		canContinue = true
+		if Config.Debug then print("Removed Starting Items") end
 	else
-		if xPlayer.getInventoryItem(Config.Item.Acetone).count >= 5 and xPlayer.getInventoryItem(Config.Item.Lithium).count >= 2 and xPlayer.getInventoryItem(Config.Item.Methlab).count >= 1 then
-			if xPlayer.canCarryItem(Config.Item.Meth, 30) then
-				TriggerClientEvent('esx_methcar:startprod', _source)
-				xPlayer.removeInventoryItem(Config.Item.Acetone, 5)
-				xPlayer.removeInventoryItem(Config.Item.Lithium, 2)
-				if Config.Debug then print("Removed Starting Items") end
-			end
+		TriggerClientEvent('unr3al_meth:client:notify', src, Config.Noti.error, Locales[Config.Locale]['Not_Supplies'])
+	end
+
+	if canContinue then
+		FreezeEntityPosition(entity, true)
+		SetPedIntoVehicle(ped, vehicle, 2)
+
+		local success = lib.callback.await('unr3al_meth:client:skillcheck', src, vehicle)
+		if success then
+			methMakers[src] = { vehicle = entity, progress = 0, quality = 0, methType = methType, paused = false, }
+			TriggerEvent('unr3al_meth:server:production', source, netId)
+			if Config.Debug then print("Methtype: "..methType) end
+
+			if Config.LogType == 'discord' then
+				DiscordLogs("start", "Started Cooking", "green", {
+					{name = "Player Informations", value = " ", inline = false},
+					{name = "ID", value = tostring(src), inline = true},
+					{name = "Name", value = tostring(xPlayer.name), inline = true},
+					{name = "Identifier", value = tostring(xPlayer.identifier), inline = true},
+					{name = "Cords", value = " ", inline = false},
+					{name = "X", value = tostring(pos.x), inline = true},
+					{name = "Y", value = tostring(pos.y), inline = true},
+					{name = "Z", value = tostring(pos.z), inline = true},
+				})
+			elseif Config.LogType == 'ox_lib' then
+				lib.logger(xPlayer.identifier, 'Started Cooking Meth', 'Started Cooking at: '..tostring(pos))
+			elseif Config.LogType == 'disabled' then
+			else print("MISSING LOG TYPE") end
 		else
-			TriggerClientEvent('esx_methcar:notify', _source, Config.Noti.error, "Not enough supplies to start producing Meth")
+			--Blow
+			TriggerEvent('unr3al_meth:server:blow', source, netId)
 		end
 	end
 end)
 
-RegisterServerEvent('esx_methcar:stopf')
-AddEventHandler('esx_methcar:stopf', function(id)
-	local _source = source
-	local xPlayers = ESX.GetExtendedPlayers()
 
-	for k, xPlayer in pairs(xPlayers) do
-		TriggerClientEvent('esx_methcar:stopfreeze', xPlayer.source, id)
+RegisterServerEvent('unr3al_meth:server:blow')
+AddEventHandler('unr3al_meth:server:blow', function(source, netId)
+	local src = source
+	local entity = NetworkGetEntityFromNetworkId(netId)
+	local pos = GetEntityCoords(entity)
+	local Players = ESX.GetExtendedPlayers()
+	local Player = ESX.GetPlayerFromId(src)
+	for k, Player in pairs(Players) do
+		TriggerClientEvent('unr3al_meth:client:blowup', Player.source, pos.x, pos.y, pos.z, entity, netId)
 	end
-end)
-
-RegisterServerEvent('esx_methcar:make')
-AddEventHandler('esx_methcar:make', function(posx,posy,posz)
-	local _source = source
-	local xPlayer = ESX.GetPlayerFromId(_source)
-	
-	if xPlayer.getInventoryItem('methlab').count >= 1 then
-		local xPlayers = ESX.GetExtendedPlayers()
-
-		for k, xPlayer in pairs(xPlayers) do
-			TriggerClientEvent('esx_methcar:smoke', xPlayer.source, posx, posy, posz, 'a')
-		end
-	else
-		TriggerClientEvent('esx_methcar:stop', _source)
-	end
-end)
-
-RegisterServerEvent('esx_methcar:finish')
-AddEventHandler('esx_methcar:finish', function(qualtiy)
-	local _source = source
-	local xPlayer = ESX.GetPlayerFromId(_source)
-	if Config.Debug then print('Base Quality: '.. qualtiy) end
-	local rnd = math.random(Config.Item.Chance.Min, Config.Item.Chance.Max)
-	local Amount = math.floor(qualtiy / 2) + rnd
-	if Config.Debug then print('Base Amount: '.. Amount) end
-
-	if Config.Inventory.Type == 'ox_iventory' and not Config.Inventory.ForceAdd then
-
-		AmountPlayerCanCarry = exports.ox_inventory:CanCarryAmount(xPlayer.source, Config.Item.Meth)
-		if Config.Debug then print('Space for Meth: '.. AmountPlayerCanCarry) end
-
-		if Config.Inventory.oxSplit then
-			if Amount <= AmountPlayerCanCarry then
-				MethAmount = Amount
-				exports.ox_inventory:AddItem(xPlayer.source, Config.Item.Meth, Amount)
-			else
-				MethAmount = AmountPlayerCanCarry - Amount
-				exports.ox_inventory:AddItem(xPlayer.source, Config.Item.Meth, MethAmount)
-			end
-		elseif Config.Inventory == 'glovebox' then
-			if Amount <= AmountPlayerCanCarry then
-				MethAmount = Amount
-				exports.ox_inventory:AddItem(xPlayer.source, Config.Item.Meth, Amount)
-			else
-				MethAmount = AmountPlayerCanCarry - Amount
-				exports.ox_inventory:AddItem(xPlayer.source, Config.Item.Meth, MethAmount)
-			end
-		end
-	elseif Config.Inventory.Type == 'ox_iventory' and Config.Inventory.ForceAdd then
-		MethAmount = Amount
-		exports.ox_inventory:AddItem(xPlayer.source, Config.Item.Meth, MethAmount)
-	else
-		if Config.Inventory.ForceAdd then
-			MethAmount = Amount
-			xPlayer.addInventoryItem(Config.Item.Meth, MethAmount)
-		elseif xPlayer.canCarryItem(Config.Item.Meth, MethAmount) then
-			xPlayer.addInventoryItem(Config.Item.Meth, MethAmount)
-		end
-	end
-
-	if Config.Debug then print('Amount added: '.. MethAmount) end
-	local pos = GetEntityCoords(GetPlayerPed(_source))
-
-	if Config.LogType == 'discord' then
-		DiscordLogs("finish", "Finished Cooking", "green", {
-
-			{name = "Player Informations", value = " ", inline = false},
-			{name = "ID", value = tostring(_source), inline = true},
-			{name = "Name", value = tostring(xPlayer.name), inline = true},
-			{name = "Identifier", value = tostring(xPlayer.identifier), inline = true},
-			{name = " ", value = " ", inline = false},
-			{name = "Meth", value = " ", inline = false},
-			{name = "Amount", value = tostring(MethAmount), inline = true},
-			{name = " ", value = " ", inline = false},
-			{name = "Cords", value = " ", inline = false},
-			{name = "X", value = tostring(pos.x), inline = true},
-			{name = "Y", value = tostring(pos.y), inline = true},
-			{name = "Z", value = tostring(pos.z), inline = true},
-		})
-	elseif Config.LogType == 'ox_lib' then
-		lib.logger(xPlayer.identifier, 'Finished Cooking Meth', 'Meth Player Got: '..MethAmount)
-	elseif Config.LogType == 'disabled' then
-	else
-		print("MISSING LOG TYPE")
-	end
-end)
-
-RegisterServerEvent('esx_methcar:blow')
-AddEventHandler('esx_methcar:blow', function(posx, posy, posz)
-	local _source = source
-	local xPlayers = ESX.GetExtendedPlayers()
-	local xPlayer = ESX.GetPlayerFromId(_source)
-
-	for k, xPlayer in pairs(xPlayers) do
-		TriggerClientEvent('esx_methcar:blowup', xPlayer.source,posx, posy, posz)
-	end
-
-	if Config.Inventory.Type == 'ox_inventory' then
-		local Methlab = exports.ox_inventory:GetItemCount(xPlayer.source, Config.Item.Methlab)
-	else
-		xPlayer.removeInventoryItem(Config.Item.Methlab, 1)
-	end
+	TriggerEvent('unr3al_meth:server:stopProduction', src, netId)
+	Player.removeInventoryItem(Config.Items.Methlab, 1)
 
 	if Config.LogType == 'discord' then
 		DiscordLogs("explosion", "Explosion", "red", {
 			{name = "Player Informations", value = " ", inline = false},
-			{name = "ID", value = _source, inline = true},
+			{name = "ID", value = src, inline = true},
 			{name = "Name", value = xPlayer.name, inline = true},
 			{name = "Identifier", value = xPlayer.identifier, inline = true},
 			{name = " ", value = " ", inline = false},
@@ -185,9 +150,151 @@ AddEventHandler('esx_methcar:blow', function(posx, posy, posz)
 	end
 end)
 
-ESX.RegisterServerCallback('esx_methcar:getcops', function(source, cb)
-	cb(ESX.GetExtendedPlayers('job', Config.Police))
+RegisterNetEvent('unr3al_meth:server:production')
+AddEventHandler('unr3al_meth:server:production', function(source, netId)
+	local src = source
+	local entity = NetworkGetEntityFromNetworkId(netId)
+	local ped = GetPlayerPed(src)
+
+	if Config.Debug then print(methMakers[src]) end
+
+	while (methMakers[src]) do
+		Wait(10)
+		if Config.Debug then print('Entity Model: '..GetEntityModel(entity)) end
+		if (DoesEntityExist(entity) and GetEntityModel(methMakers[src].vehicle) == `journey`) and GetVehiclePedIsIn(ped, false) ~= 0 then
+			TriggerEvent('unr3al_meth:server:smoke', source, netId)
+			if (not methMakers[src].paused) then
+				methMakers[src].quality += 1
+				TriggerClientEvent('unr3al_meth:client:notify', src, Config.Noti.info, Locales[Config.Locale]['Update1'] .. methMakers[src].progress .. Locales[Config.Locale]['Update2'])
+			end
+		else
+			if Config.Debug then print('Stopped because not in vehicle') end
+			TriggerEvent('unr3al_meth:server:stopProduction', src, netId)
+			return
+		end
+		if (methMakers[src].progress < 95) then
+			Citizen.Wait(Config.PauseTime)
+			if Config.Debug then print('Paused state: '..tostring(methMakers[src].paused)) end
+			if not methMakers[src].paused and GetVehiclePedIsIn(ped, false) ~= 0 then
+				
+
+				local Percent = math.random(Config.Progress.Min, Config.Progress.Max)
+				methMakers[src].progress += Percent
+				MiniGamePercentage = math.random(1, Config.ChangeMiniGame)
+				if Config.Debug then print("Minigame Chance: "..MiniGamePercentage) end
+			end
+			if (not methMakers[src].paused and methMakers[src].progress > 10 and methMakers[src].progress < 95 and MiniGamePercentage == 1 and methMakers[src]) then
+				methMakers[src].paused = true
+				local MiniGame = math.random(1,8)
+				local tempquality = lib.callback.await('unr3al_meth:client:openContext', src, MiniGame, netId)
+				if methMakers[src] ~= nil then
+					methMakers[src].quality = methMakers[src].quality + tempquality
+					methMakers[src].paused = false
+				end
+			end
+		else
+			TriggerClientEvent('unr3al_meth:client:notify', src, Config.Noti.success, Locales[Config.Locale]['Production_Finish'], Config.Noti.time)
+
+			if Config.Debug then print('Quality: '..methMakers[src].quality) end
+			TriggerEvent('unr3al_meth:server:finish', source, methMakers[src].quality, netId)
+			return
+		end
+	end
 end)
+
+RegisterServerEvent('unr3al_meth:server:smoke')
+AddEventHandler('unr3al_meth:server:smoke', function(source, netId)
+	local src = source
+	local Player = ESX.GetPlayerFromId(src)
+	local entity = NetworkGetEntityFromNetworkId(netId)
+	local pos = GetEntityCoords(entity)
+
+    if not methMakers[src] or not DoesEntityExist(entity) then
+        return
+    end
+	
+	if Player.getInventoryItem(Config.Items.Methlab).count >= 1 then
+		local Players = ESX.GetExtendedPlayers()
+
+		for k, Player in pairs(Players) do
+			TriggerClientEvent('unr3al_meth:client:smoke', Player.source, false, netId)
+		end
+	else
+		methMakers[src] = nil
+		TriggerEvent('unr3al_meth:server:stopProduction', src, netId)
+	end
+end)
+
+RegisterServerEvent('unr3al_meth:server:finish')
+AddEventHandler('unr3al_meth:server:finish', function(source, methAmount, netId)
+	local src = source
+	local Player = ESX.GetPlayerFromId(src)
+
+	if Config.Debug then print('Base Quality: '.. methMakers[src].quality) end
+
+	local rnd = math.random(Config.Items[methMakers[src].methType].Meth.Chance.Min, Config.Items[methMakers[src].methType].Meth.Chance.Max)
+	local Amount = math.floor(methAmount / 2) + rnd
+	if Config.Debug then print('Base Amount: '.. Amount) end
+	local MethAmount = Amount
+
+	if Player.canCarryItem(Config.Items[methMakers[src].methType].Meth.ItemName, MethAmount) or Config.Inventory.ForceAdd then
+		Player.addInventoryItem(Config.Items[methMakers[src].methType].Meth.ItemName, MethAmount)
+	elseif invstate == 'started' then
+		local AmountPlayerCanCarry = exports.ox_inventory:CanCarryAmount(src, Config.Items[methMakers[src].methType].Meth.ItemName)
+		if (AmountPlayerCanCarry <= 0) then
+			AmountPlayerCanCarry = 0
+		end
+		if Config.Debug then print('Space for Meth: '.. AmountPlayerCanCarry) end
+
+		if Config.Inventory.oxSplit and not AmountPlayerCanCarry == 0 then
+			if Amount <= AmountPlayerCanCarry then
+				MethAmount = Amount
+			else
+				MethAmount = AmountPlayerCanCarry
+			end
+			Player.addInventoryItem(Config.Items[methMakers[src].methType].Meth.ItemName, MethAmount)
+		end
+	end
+
+	if Config.Debug then print('Amount added: '.. MethAmount) end
+	local pos = GetEntityCoords(GetPlayerPed(src))
+
+	if Config.LogType == 'discord' then
+		DiscordLogs("finish", "Finished Cooking", "green", {
+
+			{name = "Player Informations", value = " ", inline = false},
+			{name = "ID", value = tostring(src), inline = true},
+			{name = "Name", value = tostring(Player.name), inline = true},
+			{name = "Identifier", value = tostring(Player.identifier), inline = true},
+			{name = " ", value = " ", inline = false},
+			{name = "Meth", value = " ", inline = false},
+			{name = "Amount", value = tostring(MethAmount), inline = true},
+			{name = " ", value = " ", inline = false},
+			{name = "Cords", value = " ", inline = false},
+			{name = "X", value = tostring(pos.x), inline = true},
+			{name = "Y", value = tostring(pos.y), inline = true},
+			{name = "Z", value = tostring(pos.z), inline = true},
+		})
+	elseif Config.LogType == 'ox_lib' then
+		lib.logger(xPlayer.identifier, 'Finished Cooking Meth', 'Meth Player Got: '..MethAmount)
+	elseif Config.LogType == 'disabled' then
+	else
+		print("MISSING LOG TYPE")
+	end
+	TriggerEvent('unr3al_meth:server:stopProduction', src, netId)
+end)
+
+
+
+
+
+
+
+
+
+
+
+
 
 if Config.LogType == 'discord' then
 	function DiscordLogs(name, title, color, fields)
@@ -214,30 +321,3 @@ if Config.LogType == 'discord' then
 		end
 	end
 end
-
-GithubUpdater = function()
-    GetCurrentVersion = function()
-	    return GetResourceMetadata( GetCurrentResourceName(), "version" )
-    end
-    
-    local CurrentVersion = GetCurrentVersion()
-    local resourceName = "^4["..GetCurrentResourceName().."]^0"
-
-    if Config.VersionChecker then
-        PerformHttpRequest('https://raw.githubusercontent.com/1OSaft/unr3al_Meth/main/VERSION', function(Error, NewestVersion, Header)
-            print("###############################")
-            if CurrentVersion == NewestVersion then
-                print(resourceName .. '^2 ✓ Resource is Up to Date^0 - ^5Current Version: ^2' .. CurrentVersion .. '^0')
-            elseif CurrentVersion ~= NewestVersion then
-                print(resourceName .. '^1 ✗ Resource Outdated. Please Update!^0 - ^5Current Version: ^1' .. CurrentVersion .. '^0')
-                print('^5Newest Version: ^2' .. NewestVersion .. '^0 - ^6Download here:^9 https://github.com/1OSaft/unr3al_Meth/releases/tag/v'.. NewestVersion .. '^0')
-            end
-            print("###############################")
-        end)
-    else
-        print("###############################")
-        print(resourceName .. '^2 ✓ Resource loaded^0')
-        print("###############################")
-    end
-end
-GithubUpdater()
