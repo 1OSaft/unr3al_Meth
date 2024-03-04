@@ -45,7 +45,8 @@ Config.Items = {
 
     EnableDifferentMethTypes = true, -- If you disabble the different meth types the input dialog disappeares and it takes the values out of the Easy type
 
-    Easy = {
+    ["Easy"] = {
+        Label = "Easy",
         Ingredients = {
             ["acetone"] = 1,
             ["lithium"] = 1,
@@ -58,7 +59,7 @@ Config.Items = {
             },
         }
     },
-    Medium = {
+    ["Medium"] = {
         Ingredients = {
             ["acetone"] = 8,
             ["lithium"] = 4,
@@ -71,7 +72,7 @@ Config.Items = {
             },
         }
     },
-    Hard = {
+    ["Hard"] = {
         Ingredients = {
             ["acetone"] = 12,
             ["lithium"] = 8,
@@ -83,7 +84,7 @@ Config.Items = {
                 Max = 20
             },
         }
-    }
+    },
 }
 
 

@@ -18,9 +18,6 @@ Locales ['en'] = {
     ['Update2'] = "%",
 
     ['Input_Title'] = "Meth recipe",
-    ['Input_Easy'] = "Easy",
-    ['Input_Medium'] = "Medium",
-    ['Input_Hard'] = 'Hard',
 
 --Questions
 

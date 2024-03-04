@@ -66,8 +66,12 @@ lib.callback.register('unr3al_meth:client:getMethType', function(netId)
 	if not DoesEntityExist(entity) then
 		return
 	end
+	local arrayOptions = {}
+	for vName in pairs(Config.Items) do
+		table.insert(arrayOptions, {label = Config.Items[vName].Label, value = vName})
+	end
 	local methType = lib.inputDialog('Meth', {
-		{type = 'select', label = 'Select meth recipe', description = 'Some input description', required = true, options = {{label = 'Easy', value = 'Easy'}, {label = 'Medium', value = 'Medium'}, {label = 'Hard', value = 'Hard'}}},
+		{type = 'select', label = 'Select meth recipe', description = 'Some input description', required = true, options = arrayOptions},
 	})
 	if Config.Debug then print("Meth type: "..methType[1]) end
 	TriggerEvent('unr3al_meth:client:registerContext')
